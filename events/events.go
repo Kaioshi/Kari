@@ -24,6 +24,17 @@ type Params struct {
 	Args                                  []string
 }
 
+func (p *Params) String() string {
+	args := ""
+	if len(p.Args) > 0 {
+		for _, value := range p.Args {
+			args += value + ", "
+		}
+		//args = args[0:-2]
+	}
+	return fmt.Sprintf("Context: %s, Nick: %s, Address: %s, Data: %s, Command: %s, Args: %s", p.Context, p.Nick, p.Address, p.Data, p.Command, args)
+}
+
 func CmdListen(command *CmdListener) {
 	commandListeners = append(commandListeners, *command)
 	fmt.Println("Added command listener", command.Command)
@@ -38,6 +49,7 @@ func Emit(event string, input *Params) {
 	if event == "PRIVMSG" {
 		for _, listener := range commandListeners {
 			if input.Command == listener.Command {
+				fmt.Println(input)
 				listener.Callback(input)
 			}
 		}
