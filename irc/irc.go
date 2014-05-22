@@ -8,6 +8,7 @@ import (
 	"net"
 	"os"
 	"strings"
+	"time"
 )
 
 var sem = make(chan int, 1)
@@ -18,12 +19,8 @@ type IRC struct {
 }
 
 func (irc *IRC) Send(line string) {
-	fmt.Println("[Sent]", line)
+	fmt.Println(time.Now().Format("["+time.Stamp+"]"), "->", line)
 	fmt.Fprintf(irc.Conn, line+"\r\n")
-}
-
-func (irc *IRC) Say(target string, line string) {
-	irc.Send("PRIVMSG " + target + " :" + line)
 }
 
 func (irc *IRC) Connect() bufio.Reader {
@@ -40,6 +37,28 @@ func (irc *IRC) Connect() bufio.Reader {
 	return *out
 }
 
+// basic IRC commands
+func (irc *IRC) Join(channel string) {
+	if channel != "" && channel[0:1] == "#" {
+		irc.Send("JOIN " + channel)
+	}
+}
+
+func (irc *IRC) Part(channel string) {
+	if channel != "" && channel[0:1] == "#" {
+		irc.Send("PART " + channel)
+	}
+}
+
+func (irc *IRC) Say(target string, line string) {
+	irc.Send("PRIVMSG " + target + " :" + line)
+}
+
+func (irc *IRC) Action(target string, line string) {
+	irc.Send("PRIVMSG " + target + " :\001ACTION " + line + "\001")
+}
+
+// misc
 func (irc *IRC) findParams(params *events.Params, line string, args []string) {
 	if args[1] == "PRIVMSG" {
 		params.Nick = args[0][1:strings.Index(args[0], "!")]
@@ -55,7 +74,7 @@ func (irc *IRC) findParams(params *events.Params, line string, args []string) {
 
 func (irc *IRC) handleData(raw []byte) {
 	line := string(raw)
-	fmt.Println("[Recv]", line)
+	fmt.Println(time.Now().Format("["+time.Stamp+"]"), "<-", line)
 	if line[0:1] != ":" {
 		if line[0:4] == "PING" {
 			irc.Send("PONG " + line[5:])
