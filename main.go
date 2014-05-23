@@ -1,4 +1,4 @@
-// Garionette project main.go
+// KARI NO Goooooooooooo
 package main
 
 import (
@@ -6,15 +6,20 @@ import (
 	"Kari/irc"
 	"Kari/plugins/core"
 	"Kari/plugins/google"
+	"fmt"
+	"time"
 )
 
 func main() {
+	start := time.Now()
 	conf := &config.Config{}
 	conf.Parse()
-	bot := &irc.IRC{*conf, nil}
+	info := &irc.Info{}
+	bot := &irc.IRC{Config: *conf, Conn: nil, Info: *info}
 
 	core.Register(bot)
 	google.Register(bot)
 
+	fmt.Println("Took", time.Since(start)*time.Microsecond, "to load plugins.")
 	bot.Start()
 }
