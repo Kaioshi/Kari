@@ -1,7 +1,10 @@
 // events
 package events
 
-import "fmt"
+import (
+	"Kari/lib"
+	"fmt"
+)
 
 var eventListeners = make([]EvListener, 0)
 var commandListeners = make([]CmdListener, 0)
@@ -58,19 +61,32 @@ func Emit(event string, input *Params) {
 			if len(listener.Commands) > 0 {
 				for _, command := range listener.Commands {
 					if command == input.Command {
-						go listener.Callback(input)
+						go func() { // don't exit if the plugin has an issue
+							defer catchPanic("command", command)
+							listener.Callback(input)
+						}()
 					}
 				}
 			} else if input.Command == listener.Command {
-				//fmt.Printf("Listener: %s\n", listener)
-				go listener.Callback(input)
+				go func() {
+					defer catchPanic("command", listener.Command)
+					listener.Callback(input)
+				}()
 			}
 		}
 	}
 	for _, listener := range eventListeners {
 		if listener.Event == event {
-			//fmt.Printf("Listener: %s\n", listener)
-			go listener.Callback(input)
+			go func() {
+				defer catchPanic("event", listener.Handle)
+				listener.Callback(input)
+			}()
 		}
+	}
+}
+
+func catchPanic(listenType string, handle string) {
+	if e := recover(); e != nil {
+		fmt.Println(lib.Timestamp(fmt.Sprintf("== Error in %s \"%s\": %s", listenType, handle, e)))
 	}
 }
