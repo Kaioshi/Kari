@@ -7,8 +7,8 @@ import (
 )
 
 type Config struct {
-	Server, Port, Nick, Username, Realname, Prefix string
-	Autojoin                                       []string
+	Server, Port, Nick, Username, Fulluser, Realname, Prefix string
+	Autojoin                                                 []string
 }
 
 func (conf *Config) Parse() {
