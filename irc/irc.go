@@ -24,7 +24,7 @@ func (irc *IRC) SilentSend(line string) {
 
 func (irc *IRC) Send(line string) {
 	fmt.Println(lib.Timestamp("-> " + line))
-	fmt.Fprintf(irc.Conn, lib.Sanitise(line)+"\r\n")
+	fmt.Fprint(irc.Conn, lib.Sanitise(line)+"\r\n")
 }
 
 func (irc *IRC) Connect() bufio.Reader {
