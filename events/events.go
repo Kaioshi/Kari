@@ -25,6 +25,7 @@ type CmdListener struct {
 
 type Params struct {
 	Context, Nick, Address, Data, Command string
+	Newnick, Kicknick, Message            string
 	Args                                  []string
 }
 
@@ -42,9 +43,10 @@ func (p *Params) String() string {
 		for _, value := range p.Args {
 			args += value + ", "
 		}
-		//args = args[0:-2]
+		args = args[0 : len(args)-2]
 	}
-	return fmt.Sprintf("Context: %s, Nick: %s, Address: %s, Data: %s, Command: %s, Args: %s", p.Context, p.Nick, p.Address, p.Data, p.Command, args)
+	return fmt.Sprintf("Context: %s, Nick: %s, Address: %s, Data: %s, Command: %s, Args: %s, Newnick: %s, Kicknick: %s, Message: %s",
+		p.Context, p.Nick, p.Address, p.Data, p.Command, args, p.Newnick, p.Kicknick, p.Message)
 }
 
 func CmdListen(command *CmdListener) {
@@ -56,7 +58,7 @@ func EvListen(event *EvListener) {
 }
 
 func Emit(event string, input *Params) {
-	if event == "PRIVMSG" { // this seems wasteful somehow. TODO: make this efficient when you know how~
+	if event == "PRIVMSG" || event == "NOTICE" { // this seems wasteful somehow. TODO: make this efficient when you know how~
 		for _, listener := range commandListeners {
 			if len(listener.Commands) > 0 {
 				for _, command := range listener.Commands {
