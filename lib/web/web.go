@@ -6,7 +6,7 @@ import (
 	"html"
 	"io/ioutil"
 	"net/http"
-	"strings"
+	"net/url"
 )
 
 type GoogleResultEntry struct {
@@ -35,7 +35,7 @@ type GoogleResult struct {
 
 func Google(searchTerm string, results int) GoogleResult {
 	var resp GoogleResult
-	response, err := http.Get(fmt.Sprintf("http://ajax.googleapis.com/ajax/services/search/web?v=1.0&rsz=%d&q=%s", results, strings.Replace(searchTerm, " ", "%20", -1)))
+	response, err := http.Get(fmt.Sprintf("http://ajax.googleapis.com/ajax/services/search/web?v=1.0&rsz=%d&q=%s", results, url.QueryEscape(searchTerm)))
 	if err != nil {
 		resp.Error = err.Error()
 		return resp
