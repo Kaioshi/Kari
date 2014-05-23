@@ -35,29 +35,41 @@ type GoogleResult struct {
 
 func Google(searchTerm string, results int) GoogleResult {
 	var resp GoogleResult
-	response, err := http.Get(fmt.Sprintf("http://ajax.googleapis.com/ajax/services/search/web?v=1.0&rsz=%d&q=%s", results, url.QueryEscape(searchTerm)))
+	var uri string = fmt.Sprintf("http://ajax.googleapis.com/ajax/services/search/web?v=1.0&rsz=%d&q=%s", results, url.QueryEscape(searchTerm))
+	Get(uri, func(error string, body []byte) {
+		err := json.Unmarshal(body, &resp)
+		if err != nil {
+			resp.Error = err.Error()
+		} else {
+			for i, _ := range resp.Results.Data {
+				if resp.Results.Data[i].Title != "" {
+					resp.Results.Data[i].Title = html.UnescapeString(resp.Results.Data[i].Title)
+				}
+				if resp.Results.Data[i].Content != "" {
+					resp.Results.Data[i].Content = html.UnescapeString(resp.Results.Data[i].Content)
+				}
+			}
+		}
+	})
+	return resp
+}
+
+func Get(rawuri string, callback func(err string, body []byte)) {
+	_, err := url.Parse(rawuri)
 	if err != nil {
-		resp.Error = err.Error()
-		return resp
+		callback(err.Error(), []byte{})
+		return
+	}
+	response, err := http.Get(rawuri)
+	if err != nil {
+		callback(err.Error(), []byte{})
+		return
 	}
 	defer response.Body.Close()
-	contents, err := ioutil.ReadAll(response.Body)
+	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		resp.Error = err.Error()
-		return resp
+		callback(err.Error(), []byte{})
+		return
 	}
-	err = json.Unmarshal(contents, &resp)
-	if err != nil {
-		resp.Error = err.Error()
-	}
-	// unescape the things
-	for i, _ := range resp.Results.Data {
-		if resp.Results.Data[i].Title != "" {
-			resp.Results.Data[i].Title = html.UnescapeString(resp.Results.Data[i].Title)
-		}
-		if resp.Results.Data[i].Content != "" {
-			resp.Results.Data[i].Content = html.UnescapeString(resp.Results.Data[i].Content)
-		}
-	}
-	return resp
+	callback("", body)
 }
