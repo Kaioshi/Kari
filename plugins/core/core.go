@@ -79,7 +79,7 @@ func Register(bot *irc.IRC) {
 		Callback: func(input *events.Params) {
 			m := &runtime.MemStats{}
 			runtime.ReadMemStats(m)
-			bot.Say(input.Context, fmt.Sprintf("Allocated and in use: %d KiB, Total Allocated (including freed): %d KiB, Lookups: %d, Mallocs: %d, Frees: %d",
-				(m.Alloc/1024), (m.TotalAlloc/1024), m.Lookups, m.Mallocs, m.Frees))
+			bot.Say(input.Context, fmt.Sprintf("Sys: %d KiB, Allocated and in use: %d KiB, Total Allocated (including freed): %d KiB, Lookups: %d, Mallocs: %d, Frees: %d",
+				(m.Sys/1024.0), (m.Alloc/1024), (m.TotalAlloc/1024), m.Lookups, m.Mallocs, m.Frees))
 		}})
 }
