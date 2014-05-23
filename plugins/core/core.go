@@ -10,6 +10,37 @@ import (
 
 func Register(bot *irc.IRC) {
 	fmt.Println("Registering Core hooks")
+
+	// fill bot.Info.Nick / Address / Network / Server / User
+	// and keep bot.Info.Channels up to date
+	events.EvListen(&events.EvListener{
+		Handle: "botJoin",
+		Event:  "JOIN",
+		Callback: func(input *events.Params) {
+			if input.Nick == bot.Config.Nick {
+				bot.Info.Nick = input.Nick
+				bot.Info.User = input.Nick + "!" + input.Address
+				bot.Info.Channels.Add(input.Context)
+				bot.Send("WHO " + input.Context)
+			}
+		}})
+	events.EvListen(&events.EvListener{
+		Handle: "botParted",
+		Event:  "PART",
+		Callback: func(input *events.Params) {
+			if input.Nick == bot.Info.Nick {
+				bot.Info.Channels.RemoveByMatch(input.Context, true)
+			}
+		}})
+	events.EvListen(&events.EvListener{
+		Handle: "botKicked",
+		Event:  "KICK",
+		Callback: func(input *events.Params) {
+			if input.Kicknick == bot.Info.Nick {
+				bot.Info.Channels.RemoveByMatch(input.Context, true)
+			}
+		}})
+
 	// autojoin
 	events.EvListen(&events.EvListener{
 		Handle: "autojoin",
