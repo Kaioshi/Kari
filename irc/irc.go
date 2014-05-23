@@ -64,7 +64,11 @@ func (irc *IRC) findParams(params *events.Params, line string, args []string) {
 	if args[1] == "PRIVMSG" {
 		params.Nick = args[0][1:strings.Index(args[0], "!")]
 		params.Address = args[0][strings.Index(args[0], "!")+1:]
-		params.Context = args[2]
+		if args[2][0:1] == "#" { // queries
+			params.Context = args[2]
+		} else {
+			params.Context = params.Nick
+		}
 		params.Data = strings.Join(args[3:len(args)], " ")[1:]
 		if params.Data[0:1] == irc.Config.Prefix && params.Data[1:2] != "" {
 			params.Command = args[3][2:]
