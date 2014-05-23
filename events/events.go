@@ -58,19 +58,19 @@ func Emit(event string, input *Params) {
 			if len(listener.Commands) > 0 {
 				for _, command := range listener.Commands {
 					if command == input.Command {
-						listener.Callback(input)
+						go listener.Callback(input)
 					}
 				}
 			} else if input.Command == listener.Command {
 				//fmt.Printf("Listener: %s\n", listener)
-				listener.Callback(input)
+				go listener.Callback(input)
 			}
 		}
 	}
 	for _, listener := range eventListeners {
 		if listener.Event == event {
 			//fmt.Printf("Listener: %s\n", listener)
-			listener.Callback(input)
+			go listener.Callback(input)
 		}
 	}
 }
