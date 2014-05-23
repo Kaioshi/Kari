@@ -3,6 +3,7 @@ package web
 import (
 	"encoding/json"
 	"fmt"
+	"html"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -48,6 +49,15 @@ func Google(searchTerm string, results int) GoogleResult {
 	err = json.Unmarshal(contents, &resp)
 	if err != nil {
 		resp.Error = err.Error()
+	}
+	// unescape the things
+	for i, _ := range resp.Results.Data {
+		if resp.Results.Data[i].Title != "" {
+			resp.Results.Data[i].Title = html.UnescapeString(resp.Results.Data[i].Title)
+		}
+		if resp.Results.Data[i].Content != "" {
+			resp.Results.Data[i].Content = html.UnescapeString(resp.Results.Data[i].Content)
+		}
 	}
 	return resp
 }
