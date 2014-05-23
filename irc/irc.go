@@ -9,7 +9,6 @@ import (
 	"net"
 	"os"
 	"strings"
-	"time"
 )
 
 var sem = make(chan int, 1)
@@ -19,8 +18,12 @@ type IRC struct {
 	Conn   net.Conn
 }
 
+func (irc *IRC) SilentSend(line string) {
+	fmt.Fprintf(irc.Conn, lib.Sanitise(line)+"\r\n")
+}
+
 func (irc *IRC) Send(line string) {
-	fmt.Println(time.Now().Format("["+time.Stamp+"]"), "->", line)
+	fmt.Println(lib.Timestamp("-> " + line))
 	fmt.Fprintf(irc.Conn, lib.Sanitise(line)+"\r\n")
 }
 
@@ -79,15 +82,16 @@ func (irc *IRC) findParams(params *events.Params, line string, args []string) {
 
 func (irc *IRC) handleData(raw []byte) {
 	line := string(raw)
-	fmt.Println(time.Now().Format("["+time.Stamp+"]"), "<-", line)
 	if line[0:1] != ":" {
 		if line[0:4] == "PING" {
-			irc.Send("PONG " + line[5:])
+			irc.SilentSend("PONG " + line[5:])
+		} else {
+			fmt.Println(lib.Timestamp("<- " + line))
 		}
-		line = ""
 		sem <- 1
 		return
 	}
+	fmt.Println(lib.Timestamp("<- " + line))
 	args := strings.Fields(line)
 	params := &events.Params{}
 	irc.findParams(params, line, args)
@@ -102,7 +106,7 @@ func (irc *IRC) Start() {
 		<-sem
 		line, prefix, err := out.ReadLine()
 		if err != nil {
-			fmt.Println("ReadLine err:", err.Error())
+			fmt.Println("Connection error:", err.Error())
 			os.Exit(4)
 		}
 		if prefix == true {
