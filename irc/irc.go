@@ -14,8 +14,23 @@ import (
 var sem = make(chan int, 1)
 
 type IRC struct {
+	Info   Info
 	Config config.Config
 	Conn   net.Conn
+}
+
+type Info struct {
+	Nick     string
+	Address  string
+	User     string
+	Network  string
+	Server   string
+	Channels lib.StrList
+}
+
+func (i *Info) String() string {
+	return fmt.Sprintf("Nick: %s, Address: %s, User: %s, Network: %s, Server: %s, Channels: %s",
+		i.Nick, i.Address, i.User, i.Network, i.Server, strings.Join(i.Channels.List, ", "))
 }
 
 func (irc *IRC) SilentSend(line string) {
@@ -64,9 +79,17 @@ func (irc *IRC) Action(target string, line string) {
 
 // misc
 func (irc *IRC) findParams(params *events.Params, line string, args []string) {
-	if args[1] == "PRIVMSG" {
-		params.Nick = args[0][1:strings.Index(args[0], "!")]
-		params.Address = args[0][strings.Index(args[0], "!")+1:]
+	if strings.Index(args[0], "!") == -1 { // server message?
+		params.Nick = args[0][1:]
+		params.Data = strings.Join(args[1:], " ")
+		return
+	}
+	params.Nick = args[0][1:strings.Index(args[0], "!")]
+	params.Address = args[0][strings.Index(args[0], "!")+1:]
+	switch args[1] {
+	case "NOTICE":
+		fallthrough
+	case "PRIVMSG":
 		if args[2][0:1] == "#" { // queries
 			params.Context = args[2]
 		} else {
@@ -77,7 +100,34 @@ func (irc *IRC) findParams(params *events.Params, line string, args []string) {
 			params.Command = args[3][2:]
 			params.Args = strings.Fields(params.Data[len(params.Command)+1:])
 		}
+	case "NICK":
+		params.Newnick = args[2][1:]
+	case "JOIN":
+		if args[2][0:1] == ":" {
+			params.Context = args[2][1:]
+		} else {
+			params.Context = args[2]
+		}
+	case "PART":
+		if len(args) > 3 {
+			params.Message = strings.Join(args[3:], " ")[1:]
+		}
+		if args[2][0:1] == ":" { // Y U NO CONSISTENT
+			params.Context = args[2][1:]
+		} else {
+			params.Context = args[2]
+		}
+	case "QUIT":
+		params.Message = strings.Join(args[2:], " ")[1:]
+	case "KICK":
+		params.Context = args[2]
+		params.Kicknick = args[3]
+		params.Message = strings.Join(args[4:], " ")[1:]
+	case "MODE": // can't think why this is needed for now, dump its mojo in message
+		params.Context = args[2]
+		params.Message = strings.Join(args[3:], " ")
 	}
+	//fmt.Println(params)
 }
 
 func (irc *IRC) handleData(raw []byte) {
