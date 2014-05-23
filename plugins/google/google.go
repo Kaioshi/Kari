@@ -19,6 +19,6 @@ func Register(bot *irc.IRC) {
 		Callback: func(input *events.Params) {
 			var resp web.GoogleResult
 			resp = web.Google(strings.Join(input.Args, " "), 1)
-			bot.Say(input.Context, resp.Results.Data[0].Title+" ~ "+resp.Results.Data[0].URL+" ~ "+lib.StripHtml(resp.Results.Data[0].Content))
+			bot.Say(input.Context, lib.SingleSpace(resp.Results.Data[0].Title+" ~ "+resp.Results.Data[0].URL+" ~ "+lib.StripHtml(resp.Results.Data[0].Content)))
 		}})
 }
