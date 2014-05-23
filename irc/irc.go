@@ -95,7 +95,7 @@ func (irc *IRC) handleData(raw []byte) {
 	args := strings.Fields(line)
 	params := &events.Params{}
 	irc.findParams(params, line, args)
-	events.Emit(args[1], params)
+	go events.Emit(args[1], params)
 	sem <- 1
 }
 

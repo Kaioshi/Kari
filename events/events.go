@@ -61,14 +61,14 @@ func Emit(event string, input *Params) {
 			if len(listener.Commands) > 0 {
 				for _, command := range listener.Commands {
 					if command == input.Command {
-						go func() { // don't exit if the plugin has an issue
+						func() { // don't exit if the plugin has an issue
 							defer catchPanic("command", command)
 							listener.Callback(input)
 						}()
 					}
 				}
 			} else if input.Command == listener.Command {
-				go func() {
+				func() {
 					defer catchPanic("command", listener.Command)
 					listener.Callback(input)
 				}()
@@ -77,8 +77,9 @@ func Emit(event string, input *Params) {
 	}
 	for _, listener := range eventListeners {
 		if listener.Event == event {
-			go func() {
-				defer catchPanic("event", listener.Handle)
+			func() {
+				defer catchPanic("event "+listener.Event, listener.Handle)
+				//input := input
 				listener.Callback(input)
 			}()
 		}
