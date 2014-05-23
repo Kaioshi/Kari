@@ -56,34 +56,34 @@ func EvListen(event *EvListener) {
 }
 
 func Emit(event string, input *Params) {
-	if event == "PRIVMSG" {
+	if event == "PRIVMSG" { // this seems wasteful somehow. TODO: make this efficient when you know how~
 		for _, listener := range commandListeners {
 			if len(listener.Commands) > 0 {
 				for _, command := range listener.Commands {
 					if command == input.Command {
-						func() { // don't exit if the plugin has an issue
-							defer catchPanic("command", command)
-							listener.Callback(input)
-						}()
+						go fireCommand(listener, input, command)
 					}
 				}
 			} else if input.Command == listener.Command {
-				func() {
-					defer catchPanic("command", listener.Command)
-					listener.Callback(input)
-				}()
+				go fireCommand(listener, input, listener.Command)
 			}
 		}
 	}
 	for _, listener := range eventListeners {
 		if listener.Event == event {
-			func() {
-				defer catchPanic("event "+listener.Event, listener.Handle)
-				//input := input
-				listener.Callback(input)
-			}()
+			go fireEvent(listener, input)
 		}
 	}
+}
+
+func fireCommand(c CmdListener, input *Params, command string) {
+	defer catchPanic("command", command)
+	c.Callback(input)
+}
+
+func fireEvent(e EvListener, input *Params) {
+	defer catchPanic("event "+e.Event, e.Handle)
+	e.Callback(input)
 }
 
 func catchPanic(listenType string, handle string) {
