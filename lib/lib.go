@@ -15,6 +15,13 @@ func Sanitise(line string) string {
 	return reg.ReplaceAllString(line, "")
 }
 
+func SingleSpace(line string) string {
+	if strings.Index(line, "  ") > -1 {
+		return strings.Join(strings.Fields(line), " ")
+	}
+	return line
+}
+
 func StripHtml(html string) string {
 	reg := regexp.MustCompile("<[^<]+?>|\\n|\\t|\\r")
 	return reg.ReplaceAllString(html, "")
