@@ -3,6 +3,7 @@ package lib
 import (
 	"regexp"
 	"strings"
+	"time"
 )
 
 // helper functions
@@ -20,6 +21,13 @@ func SingleSpace(line string) string {
 		return strings.Join(strings.Fields(line), " ")
 	}
 	return line
+}
+
+func Timestamp(line string) string {
+	if line == "" {
+		return time.Now().Format("[" + time.Stamp + "]")
+	}
+	return time.Now().Format("["+time.Stamp+"]") + " " + line
 }
 
 func StripHtml(html string) string {
