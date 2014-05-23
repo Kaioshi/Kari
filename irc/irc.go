@@ -3,6 +3,7 @@ package irc
 import (
 	"Kari/config"
 	"Kari/events"
+	"Kari/lib"
 	"bufio"
 	"fmt"
 	"net"
@@ -20,7 +21,7 @@ type IRC struct {
 
 func (irc *IRC) Send(line string) {
 	fmt.Println(time.Now().Format("["+time.Stamp+"]"), "->", line)
-	fmt.Fprintf(irc.Conn, line+"\r\n")
+	fmt.Fprintf(irc.Conn, lib.Sanitise(line)+"\r\n")
 }
 
 func (irc *IRC) Connect() bufio.Reader {

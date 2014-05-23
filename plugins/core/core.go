@@ -4,10 +4,12 @@ import (
 	"Kari/events"
 	"Kari/irc"
 	"fmt"
+	"runtime"
 	"strings"
 )
 
 func Register(bot *irc.IRC) {
+	fmt.Println("Registering Core hooks")
 	// autojoin
 	events.EvListen(&events.EvListener{
 		Handle: "autojoin",
@@ -40,8 +42,6 @@ func Register(bot *irc.IRC) {
 		Help:    "Joins channels!",
 		Syntax:  bot.Config.Prefix + "join #channel",
 		Callback: func(input *events.Params) {
-			fmt.Println(input)
-			fmt.Printf("input.Args length: %d\n", len(input.Args))
 			if len(input.Args) < 1 || input.Args[0][0:1] != "#" {
 				bot.Say(input.Context, "That ain't how you join a channel sucka")
 				return
@@ -60,5 +60,26 @@ func Register(bot *irc.IRC) {
 				return
 			}
 			bot.Part(input.Args[0])
+		}})
+
+	// raw
+	events.CmdListen(&events.CmdListener{
+		Command: "raw",
+		Help:    "Sends raw commands to the server",
+		Syntax:  bot.Config.Prefix + "raw <command>",
+		Callback: func(input *events.Params) {
+			bot.Send(strings.Join(input.Args, " "))
+		}})
+
+	// memstats
+	events.CmdListen(&events.CmdListener{
+		Command: "memstats",
+		Help:    "Shows mem stats~",
+		Syntax:  bot.Config.Prefix + "memstats",
+		Callback: func(input *events.Params) {
+			m := &runtime.MemStats{}
+			runtime.ReadMemStats(m)
+			bot.Say(input.Context, fmt.Sprintf("Allocated and in use: %d KiB, Total Allocated (including freed): %d KiB, Lookups: %d, Mallocs: %d, Frees: %d",
+				(m.Alloc/1024), (m.TotalAlloc/1024), m.Lookups, m.Mallocs, m.Frees))
 		}})
 }

@@ -14,6 +14,7 @@ type EvListener struct {
 
 type CmdListener struct {
 	Command  string
+	Commands []string
 	Help     string
 	Syntax   string
 	Callback func(input *Params)
@@ -22,6 +23,14 @@ type CmdListener struct {
 type Params struct {
 	Context, Nick, Address, Data, Command string
 	Args                                  []string
+}
+
+func (c CmdListener) String() string {
+	return fmt.Sprintf("Command: %s, Help: %s, Syntax: %s", c.Command, c.Help, c.Syntax)
+}
+
+func (e EvListener) String() string {
+	return fmt.Sprintf("Handle: %s, Event: %s", e.Handle, e.Event)
 }
 
 func (p *Params) String() string {
@@ -37,25 +46,30 @@ func (p *Params) String() string {
 
 func CmdListen(command *CmdListener) {
 	commandListeners = append(commandListeners, *command)
-	fmt.Println("Added command listener", command.Command)
 }
 
 func EvListen(event *EvListener) {
 	eventListeners = append(eventListeners, *event)
-	fmt.Println("Added event listener", event.Handle)
 }
 
 func Emit(event string, input *Params) {
 	if event == "PRIVMSG" {
 		for _, listener := range commandListeners {
-			if input.Command == listener.Command {
-				fmt.Println(input)
+			if len(listener.Commands) > 0 {
+				for _, command := range listener.Commands {
+					if command == input.Command {
+						listener.Callback(input)
+					}
+				}
+			} else if input.Command == listener.Command {
+				//fmt.Printf("Listener: %s\n", listener)
 				listener.Callback(input)
 			}
 		}
 	}
 	for _, listener := range eventListeners {
 		if listener.Event == event {
+			//fmt.Printf("Listener: %s\n", listener)
 			listener.Callback(input)
 		}
 	}
