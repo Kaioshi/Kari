@@ -80,19 +80,20 @@ func (irc *IRC) Action(target string, line string) {
 // misc
 func (irc *IRC) findParams(params *events.Params, line string, args []string) {
 	if strings.Index(args[0], "!") == -1 { // server message?
+		params.Context = args[3]
 		params.Nick = args[0][1:]
+		params.Args = args[1:]
 		params.Data = strings.Join(args[1:], " ")
 		return
 	}
+	params.Context = args[2]
 	params.Nick = args[0][1:strings.Index(args[0], "!")]
 	params.Address = args[0][strings.Index(args[0], "!")+1:]
 	switch args[1] {
 	case "NOTICE":
 		fallthrough
 	case "PRIVMSG":
-		if args[2][0:1] == "#" { // queries
-			params.Context = args[2]
-		} else {
+		if args[2][0:1] != "#" { // queries
 			params.Context = params.Nick
 		}
 		params.Data = strings.Join(args[3:len(args)], " ")[1:]
@@ -103,29 +104,25 @@ func (irc *IRC) findParams(params *events.Params, line string, args []string) {
 	case "NICK":
 		params.Newnick = args[2][1:]
 	case "JOIN":
-		if args[2][0:1] == ":" {
-			params.Context = args[2][1:]
-		} else {
-			params.Context = args[2]
+		if params.Context[0:1] == ":" {
+			params.Context = params.Context[1:]
 		}
 	case "PART":
 		if len(args) > 3 {
 			params.Message = strings.Join(args[3:], " ")[1:]
 		}
-		if args[2][0:1] == ":" { // Y U NO CONSISTENT
-			params.Context = args[2][1:]
-		} else {
-			params.Context = args[2]
+		if params.Context[0:1] == ":" { // Y U NO CONSISTENT
+			params.Context = params.Context[1:]
 		}
 	case "QUIT":
 		params.Message = strings.Join(args[2:], " ")[1:]
 	case "KICK":
-		params.Context = args[2]
 		params.Kicknick = args[3]
 		params.Message = strings.Join(args[4:], " ")[1:]
 	case "MODE": // can't think why this is needed for now, dump its mojo in message
-		params.Context = args[2]
 		params.Message = strings.Join(args[3:], " ")
+	case "TOPIC":
+		params.Message = strings.Join(args[3:], " ")[1:]
 	}
 	//fmt.Println(params)
 }
