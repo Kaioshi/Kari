@@ -6,6 +6,7 @@ import (
 	"Kari/irc"
 	"Kari/irc/core"
 	"Kari/irc/ial"
+	"Kari/lib/logger"
 	"Kari/plugins/google"
 	"fmt"
 	"time"
@@ -16,12 +17,15 @@ func main() {
 	conf := &config.Config{}
 	conf.Parse()
 	info := &irc.Info{}
-	bot := &irc.IRC{Config: *conf, Conn: nil, Info: *info}
+	bot := &irc.IRC{Config: *conf, Info: *info}
 
+	// required
 	core.Register(bot)
 	ial.Register(bot)
+
+	// optional - comment out if you don't want 'em
 	google.Register(bot)
 
-	fmt.Println("Took", time.Since(start)*time.Microsecond, "to register plugin hooks.")
+	logger.Info(fmt.Sprintf("Took %s to register plugin hooks.", time.Since(start)*time.Microsecond))
 	bot.Start()
 }

@@ -1,16 +1,16 @@
 package google
 
 import (
-	"Kari/events"
 	"Kari/irc"
+	"Kari/irc/events"
 	"Kari/lib"
+	"Kari/lib/logger"
 	"Kari/lib/web"
-	"fmt"
 	"strings"
 )
 
 func Register(bot *irc.IRC) {
-	fmt.Println("Registering Google hooks")
+	logger.Info("Registering Google hooks")
 
 	events.CmdListen(&events.CmdListener{
 		Commands: []string{"google", "g"},

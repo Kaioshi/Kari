@@ -1,15 +1,16 @@
 package core
 
 import (
-	"Kari/events"
 	"Kari/irc"
+	"Kari/irc/events"
+	"Kari/lib/logger"
 	"fmt"
 	"runtime"
 	"strings"
 )
 
 func Register(bot *irc.IRC) {
-	fmt.Println("Registering Core hooks")
+	logger.Info("Registering Core hooks")
 
 	// autojoin
 	events.EvListen(&events.EvListener{

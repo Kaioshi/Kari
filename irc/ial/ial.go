@@ -2,11 +2,14 @@
 package ial
 
 import (
-	"Kari/events"
 	"Kari/irc"
+	"Kari/irc/events"
+	"Kari/lib/logger"
 	"fmt"
 	"strings"
 )
+
+var Channels map[string]*ChannelData = make(map[string]*ChannelData)
 
 type ChannelData struct {
 	User map[string]*UserData
@@ -26,9 +29,9 @@ func (chd *ChannelData) String() string {
 }
 
 func Register(bot *irc.IRC) {
-	fmt.Println("Registering Internal Address List hooks")
+	logger.Info("Registering Internal Address List hooks")
 
-	Channels := make(map[string]*ChannelData)
+	//Channels := make(map[string]*ChannelData)
 
 	events.CmdListen(&events.CmdListener{
 		Command: "ial",

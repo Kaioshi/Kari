@@ -2,8 +2,9 @@ package irc
 
 import (
 	"Kari/config"
-	"Kari/events"
+	"Kari/irc/events"
 	"Kari/lib"
+	"Kari/lib/logger"
 	"bufio"
 	"fmt"
 	"net"
@@ -38,7 +39,7 @@ func (irc *IRC) SilentSend(line string) {
 }
 
 func (irc *IRC) Send(line string) {
-	fmt.Println(lib.Timestamp("-> " + line))
+	logger.Sent(line)
 	fmt.Fprint(irc.Conn, lib.Sanitise(line)+"\r\n")
 }
 
@@ -135,14 +136,12 @@ func (irc *IRC) handleData(raw []byte) {
 	if line[0:1] != ":" {
 		if line[0:4] == "PING" {
 			irc.SilentSend("PONG " + line[5:])
-		} else {
-			fmt.Println(lib.Timestamp("<- " + line))
 		}
 		sem <- 1
 		return
 	}
-	fmt.Println(lib.Timestamp("<- " + line))
 	args := strings.Fields(line)
+	logger.Filter(&args[1], &line)
 	params := &events.Params{}
 	irc.findParams(params, line, args)
 	events.Emit(args[1], params)
