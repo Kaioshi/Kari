@@ -2,7 +2,7 @@
 package events
 
 import (
-	"Kari/lib"
+	"Kari/lib/logger"
 	"fmt"
 )
 
@@ -90,6 +90,6 @@ func fireEvent(e EvListener, input *Params) {
 
 func catchPanic(listenType string, handle string) {
 	if e := recover(); e != nil {
-		fmt.Println(lib.Timestamp(fmt.Sprintf("== Error in %s \"%s\": %s", listenType, handle, e)))
+		logger.Error(fmt.Sprintf("== Error in %s \"%s\": %s", listenType, handle, e))
 	}
 }
