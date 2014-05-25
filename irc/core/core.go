@@ -11,36 +11,6 @@ import (
 func Register(bot *irc.IRC) {
 	fmt.Println("Registering Core hooks")
 
-	// fill bot.Info.Nick / Address / Network / Server / User
-	// and keep bot.Info.Channels up to date
-	events.EvListen(&events.EvListener{
-		Handle: "botJoin",
-		Event:  "JOIN",
-		Callback: func(input *events.Params) {
-			if input.Nick == bot.Config.Nick {
-				bot.Info.Nick = input.Nick
-				bot.Info.User = input.Nick + "!" + input.Address
-				bot.Info.Channels.Add(input.Context)
-				bot.Send("WHO " + input.Context)
-			}
-		}})
-	events.EvListen(&events.EvListener{
-		Handle: "botParted",
-		Event:  "PART",
-		Callback: func(input *events.Params) {
-			if input.Nick == bot.Info.Nick {
-				bot.Info.Channels.RemoveByMatch(input.Context, true)
-			}
-		}})
-	events.EvListen(&events.EvListener{
-		Handle: "botKicked",
-		Event:  "KICK",
-		Callback: func(input *events.Params) {
-			if input.Kicknick == bot.Info.Nick {
-				bot.Info.Channels.RemoveByMatch(input.Context, true)
-			}
-		}})
-
 	// autojoin
 	events.EvListen(&events.EvListener{
 		Handle: "autojoin",
@@ -86,11 +56,18 @@ func Register(bot *irc.IRC) {
 		Help:    "Parts channels!",
 		Syntax:  bot.Config.Prefix + "part #channel",
 		Callback: func(input *events.Params) {
-			if len(input.Args) < 1 || input.Args[0][0:1] != "#" {
+			if len(input.Args) < 1 {
+				if input.Context[0:1] == "#" {
+					bot.Part(input.Context)
+				} else {
+					bot.Say(input.Context, "Either specify the channel to part or use the command in the channel.")
+				}
+			} else if input.Args[0][0:1] != "#" {
 				bot.Say(input.Context, "That ain't how you part a channel sucka")
 				return
+			} else {
+				bot.Part(input.Args[0])
 			}
-			bot.Part(input.Args[0])
 		}})
 
 	// raw
