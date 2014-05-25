@@ -124,6 +124,9 @@ func (irc *IRC) findParams(params *events.Params, line string, args []string) {
 	case "TOPIC":
 		params.Message = strings.Join(args[3:], " ")[1:]
 	}
+	if params.Args == nil {
+		params.Args = args
+	}
 	//fmt.Println(params)
 }
 
