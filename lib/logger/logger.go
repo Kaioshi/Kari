@@ -3,6 +3,7 @@ package logger
 import (
 	"Kari/lib"
 	"fmt"
+	"strings"
 )
 
 func log(logtype int, line *string) {
@@ -21,8 +22,44 @@ func log(logtype int, line *string) {
 		*line = "[Traf] " + *line
 	case 6:
 		*line = "[ERROR] " + *line
+	case 7:
+		*line = "[Sent] " + *line
 	}
 	fmt.Println(lib.Timestamp(*line))
+}
+
+func Filter(TYPE *string, line *string) {
+	switch *TYPE {
+	case "NICK":
+		fallthrough
+	case "KICK":
+		fallthrough
+	case "MODE":
+		fallthrough
+	case "JOIN":
+		fallthrough
+	case "PART":
+		fallthrough
+	case "QUIT":
+		fallthrough
+	case "TOPIC":
+		log(5, line)
+	case "PRIVMSG":
+		log(4, line)
+	case "NOTICE":
+		ln := *line
+		if strings.Index(ln[0:strings.Index(ln, " ")], "@") > -1 {
+			log(4, line)
+		} else {
+			log(3, line)
+		}
+	default:
+		log(3, line)
+	}
+}
+
+func Sent(line string) {
+	log(7, &line)
 }
 
 func Error(line string) {
