@@ -22,7 +22,6 @@ func (ud *UserData) String() string {
 }
 
 func (chd *ChannelData) String() string {
-	//return fmt.Sprintf("%s -- Active: %s", chd.User, "["+strings.Join(chd.Active, ", ")+"]")
 	return fmt.Sprintf("Users: %s", chd.User)
 }
 
@@ -60,6 +59,13 @@ func Register(bot *irc.IRC) {
 				bot.Info.Channels.Add(input.Context)
 				chdata := &ChannelData{User: make(map[string]*UserData)}
 				Channels[strings.ToLower(input.Context)] = chdata
+			} else {
+				Channels[strings.ToLower(input.Context)].User[strings.ToLower(input.Nick)] = &UserData{
+					Nick:     input.Nick,
+					User:     input.Address[:strings.Index(input.Address, "@")],
+					Address:  input.Address[strings.Index(input.Address, "@")+1:],
+					Fulluser: input.Args[0][1:],
+				}
 			}
 		}})
 
@@ -71,6 +77,52 @@ func Register(bot *irc.IRC) {
 				delete(Channels, strings.ToLower(input.Context))
 			} else {
 				delete(Channels[strings.ToLower(input.Context)].User, strings.ToLower(input.Nick))
+			}
+		}})
+
+	events.EvListen(&events.EvListener{
+		Handle: "ialKick",
+		Event:  "KICK",
+		Callback: func(input *events.Params) {
+			for channel, _ := range Channels {
+				for key, user := range Channels[channel].User {
+					if user.Nick == input.Kicknick {
+						delete(Channels[channel].User, key)
+					}
+				}
+			}
+		}})
+
+	events.EvListen(&events.EvListener{
+		Handle: "ialQuit",
+		Event:  "QUIT",
+		Callback: func(input *events.Params) {
+			for channel, _ := range Channels {
+				for key, user := range Channels[channel].User {
+					if user.Nick == input.Nick {
+						delete(Channels[channel].User, key)
+					}
+				}
+			}
+		}})
+
+	events.EvListen(&events.EvListener{
+		Handle: "ialNick",
+		Event:  "NICK",
+		Callback: func(input *events.Params) {
+			for channel, _ := range Channels {
+				for key, user := range Channels[channel].User {
+					if user.Nick == input.Nick {
+						newuser := &UserData{ // assigned in this order because of pure case nick changes
+							Nick:     input.Newnick, // ie nick -> NICK
+							User:     user.User,
+							Address:  user.Address,
+							Fulluser: input.Newnick + "!" + user.User + "@" + user.Address,
+						}
+						delete(Channels[channel].User, key)
+						Channels[channel].User[strings.ToLower(input.Newnick)] = newuser
+					}
+				}
 			}
 		}})
 
