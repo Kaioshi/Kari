@@ -17,8 +17,7 @@ func Register(bot *irc.IRC) {
 		Help:     "Googles stuff~",
 		Syntax:   bot.Config.Prefix + "g <search terms>",
 		Callback: func(input *events.Params) {
-			var resp web.GoogleResult
-			resp = web.Google(strings.Join(input.Args, " "), 1)
-			bot.Say(input.Context, lib.SingleSpace(resp.Results.Data[0].Title+" ~ "+resp.Results.Data[0].URL+" ~ "+lib.StripHtml(resp.Results.Data[0].Content)))
+			g := &web.Google(strings.Join(input.Args, " "), 1).Results.Data[0]
+			bot.Say(input.Context, g.Title+" ~ "+g.URL+" ~ "+lib.StripHtml(g.Content))
 		}})
 }
