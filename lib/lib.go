@@ -70,6 +70,22 @@ func (sl *StrList) String() string {
 }
 
 // random helper functions
+func CommaNum(num string) string {
+	l := len(num)
+	n := l / 3
+	ret := ""
+	for n > 0 {
+		n--
+		ret = num[l-3:l] + "," + ret
+		l = l - 3
+		num = num[0:l]
+	}
+	if num != "" {
+		ret = num + "," + ret
+	}
+	return ret[0 : len(ret)-1]
+}
+
 func Sanitise(line string) string {
 	if !strings.ContainsAny(line, "\n\t\r") {
 		return line
