@@ -8,6 +8,7 @@ import (
 	"Kari/irc/ial"
 	"Kari/lib/logger"
 	"Kari/plugins/google"
+	"Kari/plugins/youtube"
 	"fmt"
 	"time"
 )
@@ -25,6 +26,7 @@ func main() {
 
 	// optional - comment out if you don't want 'em
 	google.Register(bot)
+	youtube.Register(bot)
 
 	logger.Info(fmt.Sprintf("Took %s to register plugin hooks.", time.Since(start)*time.Microsecond))
 	bot.Start()
