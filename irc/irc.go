@@ -39,8 +39,9 @@ func (irc *IRC) SilentSend(line string) {
 }
 
 func (irc *IRC) Send(line string) {
+	line = lib.Sanitise(line)
 	logger.Sent(line)
-	fmt.Fprint(irc.Conn, lib.Sanitise(line)+"\r\n")
+	fmt.Fprint(irc.Conn, line+"\r\n")
 }
 
 func (irc *IRC) Connect() bufio.Reader {
@@ -71,7 +72,12 @@ func (irc *IRC) Part(channel string) {
 }
 
 func (irc *IRC) Say(target string, line string) {
-	irc.Send("PRIVMSG " + target + " :" + line)
+	var max int = (498 - len(target)) - len(irc.Info.User)
+	if len(line) > max {
+		logger.Debug(fmt.Sprintf("Trimmed %d length line to %d characters.", len(line), max))
+		line = line[0:max-3] + " .."
+	}
+	irc.Send(fmt.Sprintf("PRIVMSG %s :%s", target, line))
 }
 
 func (irc *IRC) Action(target string, line string) {
@@ -97,10 +103,12 @@ func (irc *IRC) findParams(params *events.Params, line string, args []string) {
 		if args[2][0:1] != "#" { // queries
 			params.Context = params.Nick
 		}
-		params.Data = strings.Join(args[3:len(args)], " ")[1:]
-		if params.Data[0:1] == irc.Config.Prefix && params.Data[1:2] != "" {
+		if args[3][1:2] == irc.Config.Prefix && args[3][2:3] != "" {
+			params.Data = strings.Join(args[4:len(args)], " ")
 			params.Command = args[3][2:]
-			params.Args = strings.Fields(params.Data[len(params.Command)+1:])
+			params.Args = args[4:len(args)]
+		} else {
+			params.Data = strings.Join(args[3:len(args)], " ")[1:]
 		}
 	case "NICK":
 		params.Newnick = args[2][1:]
