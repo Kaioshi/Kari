@@ -42,10 +42,13 @@ func Google(searchTerm string, results int) GoogleResult {
 		resp.Error = err
 		return resp
 	}
-
 	errr := json.Unmarshal(body, &resp)
 	if errr != nil {
 		resp.Error = errr.Error()
+		return resp
+	}
+	if len(resp.Results.Data) == 0 {
+		resp.Error = fmt.Sprintf("Google couldn't find \"%s\"", searchTerm)
 		return resp
 	}
 	for i, _ := range resp.Results.Data {
