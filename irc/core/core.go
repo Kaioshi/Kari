@@ -20,6 +20,27 @@ func Register(bot *irc.IRC) {
 			bot.Join(strings.Join(bot.Config.Autojoin, ","))
 		}})
 
+	events.CmdListen(&events.CmdListener{
+		Command: "help",
+		Help:    "Helps!",
+		Syntax:  bot.Config.Prefix + "help [<command>] - Example: " + bot.Config.Prefix + "help help",
+		Callback: func(input *events.Params) {
+			commands := events.CommandList()
+			if len(input.Args) == 0 {
+				bot.Say(input.Context, fmt.Sprintf("Commands: %s", strings.Join(commands, ", ")))
+				return
+			}
+			input.Args[0] = strings.ToLower(input.Args[0])
+			for _, command := range commands {
+				if input.Args[0] == command {
+					bot.Say(input.Context, events.Help(command, "help"))
+					bot.Say(input.Context, events.Help(command, "syntax"))
+					return
+				}
+			}
+			bot.Say(input.Context, fmt.Sprintf("\"%s\" isn't a command.", input.Args[0]))
+		}})
+
 	// say
 	events.CmdListen(&events.CmdListener{
 		Command: "say",

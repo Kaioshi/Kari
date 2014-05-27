@@ -9,6 +9,49 @@ import (
 var eventListeners = make([]EvListener, 0)
 var commandListeners = make([]CmdListener, 0)
 
+func CommandList() []string {
+	cmdList := make([]string, 0)
+	for _, cmd := range commandListeners {
+		if len(cmd.Commands) > 0 {
+			for _, subcmd := range cmd.Commands {
+				cmdList = append(cmdList, subcmd)
+			}
+		} else {
+			cmdList = append(cmdList, cmd.Command)
+		}
+	}
+	return cmdList
+}
+
+func Help(command string, helpType string) string {
+	var hit bool = false
+	var hitIndex int = 0
+	for i, cmd := range commandListeners {
+		if len(cmd.Commands) > 0 {
+			for k, _ := range cmd.Commands {
+				if cmd.Commands[k] == command {
+					hit = true
+					hitIndex = i
+					break
+				}
+			}
+		} else if command == cmd.Command {
+			hit = true
+			hitIndex = i
+			break
+		}
+	}
+	if hit {
+		switch helpType {
+		case "syntax":
+			return fmt.Sprintf("[Help] %s", commandListeners[hitIndex].Syntax)
+		case "help":
+			return fmt.Sprintf("[Help] %s", commandListeners[hitIndex].Help)
+		}
+	}
+	return fmt.Sprintf("No %s found for \"%s\" :\\", helpType, command)
+}
+
 type EvListener struct {
 	Handle   string
 	Event    string
