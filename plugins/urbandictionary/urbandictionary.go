@@ -12,7 +12,8 @@ import (
 )
 
 type UDResponse struct {
-	List []ListEntry `json:"list"`
+	List   []ListEntry `json:"list"`
+	Result string      `json:"result_type"`
 }
 
 type ListEntry struct {
@@ -41,6 +42,10 @@ func Register(bot *irc.IRC) {
 				logger.Error("Couldn't parse UD's JSON: " + jserr.Error())
 				return
 			}
+			if ud.Result == "no_results" {
+				bot.Say(input.Context, fmt.Sprintf("\"%s\" is not a thing on Urban Dictionary.", input.Data))
+				return
+			}
 			var resp string = ""
 			var max int = 3
 			if len(ud.List) < max {
@@ -49,7 +54,6 @@ func Register(bot *irc.IRC) {
 			for i := 0; i < max; i++ {
 				resp += fmt.Sprintf("%d) %s, ", i+1, ud.List[i].Definition)
 			}
-			fmt.Println(fmt.Sprintf(":%s PRIVMSG #pyoshi :%s", bot.Info.User, ud.List[0].Word+" ~ "+lib.SingleSpace(resp[0:len(resp)-2])))
 			bot.Say(input.Context, ud.List[0].Word+" ~ "+lib.SingleSpace(resp[0:len(resp)-2]))
 		}})
 }
