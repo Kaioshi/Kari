@@ -42,7 +42,7 @@ func Register(bot *irc.IRC) {
 		Syntax:   bot.Config.Prefix + "yt <search terms> - Example: " + bot.Config.Prefix + "yt we like big booty bitches",
 		Callback: func(input *events.Params) {
 			ytr := &YouTubeResults{}
-			uri := fmt.Sprintf("https://gdata.youtube.com/feeds/api/videos?q=%s&max-results=1&v=2&alt=json",
+			uri := fmt.Sprintf("http://gdata.youtube.com/feeds/api/videos?q=%s&max-results=1&v=2&alt=json",
 				url.QueryEscape(input.Data))
 			body, err := web.Get(&uri)
 			if err != "" {
