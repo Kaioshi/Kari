@@ -31,8 +31,6 @@ func (chd *ChannelData) String() string {
 func Register(bot *irc.IRC) {
 	logger.Info("Registering Internal Address List hooks")
 
-	//Channels := make(map[string]*ChannelData)
-
 	events.CmdListen(&events.CmdListener{
 		Command: "ial",
 		Help:    "Shows ial internal details",
@@ -55,8 +53,7 @@ func Register(bot *irc.IRC) {
 			if input.Nick == bot.Info.Nick {
 				bot.Send("WHO " + input.Context)
 				bot.Send("MODE " + input.Context)
-				if bot.Info.Nick == "" {
-					bot.Info.Nick = input.Nick
+				if bot.Info.User == "" {
 					bot.Info.User = input.Nick + "!" + input.Address
 				}
 				bot.Info.Channels.Add(input.Context)
