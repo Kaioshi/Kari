@@ -9,21 +9,21 @@ import (
 func log(logtype int, line *string) {
 	switch logtype {
 	case 0:
-		*line = "[Info] " + *line
+		*line = "\u001b[90m[\u001b[94mInfo\u001b[90m]\u001b[0m " + *line
 	case 1:
-		*line = "[Warn] " + *line
+		*line = "\u001b[90m[\u001b[93mWarn\u001b[90m]\u001b[0m " + *line
 	case 2:
-		*line = "[DEBUG] " + *line
+		*line = "\u001b[90m[\u001b[93mDEBUG\u001b[90m]\u001b[0m " + *line
 	case 3:
-		*line = "[Serv] " + *line
+		*line = "\u001b[90m[\u001b[0mServ\u001b[90m]\u001b[0m " + *line
 	case 4:
-		*line = "[Chat] " + *line
+		*line = "\u001b[90m[\u001b[36mChat\u001b[90m]\u001b[0m " + *line
 	case 5:
-		*line = "[Traf] " + *line
+		*line = "\u001b[90m[\u001b[37mTraf\u001b[90m]\u001b[0m " + *line
 	case 6:
-		*line = "[ERROR] " + *line
+		*line = "\u001b[90m[\u001b[91mERROR\u001b[90m]\u001b[0m " + *line
 	case 7:
-		*line = "[Sent] " + *line
+		*line = "\u001b[90m[\u001b[32mSent\u001b[90m]\u001b[0m " + *line
 	}
 	fmt.Println(lib.Timestamp(*line))
 }
