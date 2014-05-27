@@ -56,6 +56,10 @@ func Register(bot *irc.IRC) {
 				bot.Say(input.Context, "Herp. Check logs")
 				return
 			}
+			if len(ytr.Feed.Entry) == 0 {
+				bot.Say(input.Context, fmt.Sprintf("\"%s\" is not a thing on YouTube.", input.Data))
+				return
+			}
 			yt := &ytr.Feed.Entry[0]
 			duration, errr := time.ParseDuration(yt.Info.Duration["seconds"] + "s")
 			resp := fmt.Sprintf("%s ~ [%s] %s - %s views ~ http://youtu.be/%s ~ %s",
