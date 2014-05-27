@@ -26,7 +26,7 @@ func Register(bot *irc.IRC) {
 		Help:    "Says stuff!",
 		Syntax:  bot.Config.Prefix + "say <thing you want to say>",
 		Callback: func(input *events.Params) {
-			bot.Say(input.Context, strings.Join(input.Args, " "))
+			bot.Say(input.Context, input.Data)
 		}})
 
 	// action
@@ -35,7 +35,7 @@ func Register(bot *irc.IRC) {
 		Help:    "/me's stuff!",
 		Syntax:  bot.Config.Prefix + "action <thing you want the bot to emote>",
 		Callback: func(input *events.Params) {
-			bot.Action(input.Context, strings.Join(input.Args, " "))
+			bot.Action(input.Context, input.Data)
 		}})
 
 	// join
@@ -77,7 +77,7 @@ func Register(bot *irc.IRC) {
 		Help:    "Sends raw commands to the server",
 		Syntax:  bot.Config.Prefix + "raw <command>",
 		Callback: func(input *events.Params) {
-			bot.Send(strings.Join(input.Args, " "))
+			bot.Send(input.Data)
 		}})
 
 	// memstats
