@@ -6,7 +6,6 @@ import (
 	"Kari/lib"
 	"Kari/lib/logger"
 	"Kari/lib/web"
-	"strings"
 )
 
 func Register(bot *irc.IRC) {
@@ -17,7 +16,7 @@ func Register(bot *irc.IRC) {
 		Help:     "Googles stuff~",
 		Syntax:   bot.Config.Prefix + "g <search terms>",
 		Callback: func(input *events.Params) {
-			g := &web.Google(strings.Join(input.Args, " "), 1).Results.Data[0]
+			g := &web.Google(input.Data, 1).Results.Data[0]
 			bot.Say(input.Context, g.Title+" ~ "+g.URL+" ~ "+lib.StripHtml(g.Content))
 		}})
 }
