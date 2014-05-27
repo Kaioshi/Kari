@@ -3,9 +3,67 @@ package lib
 import (
 	"fmt"
 	"regexp"
+	"runtime"
 	"strings"
 	"time"
 )
+
+// random helper functions
+func GC() {
+	runtime.GC()
+}
+
+func CommaNum(num string) string {
+	l := len(num)
+	n := l / 3
+	ret := ""
+	for n > 0 {
+		n--
+		ret = num[l-3:l] + "," + ret
+		l = l - 3
+		num = num[0:l]
+	}
+	if num != "" {
+		ret = num + "," + ret
+	}
+	return ret[0 : len(ret)-1]
+}
+
+func Sanitise(line string) string {
+	if !strings.ContainsAny(line, "\n\t\r") {
+		return line
+	}
+	reg := regexp.MustCompile("\\n|\\t|\\r")
+	return reg.ReplaceAllString(line, "")
+}
+
+func SingleSpace(line string) string {
+	if strings.Index(line, "  ") > -1 {
+		return strings.Join(strings.Fields(line), " ")
+	}
+	return line
+}
+
+func Timestamp(line string) string {
+	if line == "" {
+		return time.Now().Format("[" + time.Stamp + "]")
+	}
+	return time.Now().Format("["+time.Stamp+"]") + " " + line
+}
+
+func StripHtml(html string) string {
+	reg := regexp.MustCompile("<[^<]+?>|\\n|\\t|\\r")
+	return reg.ReplaceAllString(html, "")
+}
+
+func HasElementString(arr []string, match string) bool {
+	for _, line := range arr {
+		if strings.ToLower(line) == strings.ToLower(match) {
+			return true
+		}
+	}
+	return false
+}
 
 // STRING LISTS ---- why isn't this built in or less pointlessly complex
 type StrList struct {
@@ -67,57 +125,4 @@ func (sl *StrList) RemoveByIndex(i int) {
 
 func (sl *StrList) String() string {
 	return fmt.Sprintf("%#v", sl.List)
-}
-
-// random helper functions
-func CommaNum(num string) string {
-	l := len(num)
-	n := l / 3
-	ret := ""
-	for n > 0 {
-		n--
-		ret = num[l-3:l] + "," + ret
-		l = l - 3
-		num = num[0:l]
-	}
-	if num != "" {
-		ret = num + "," + ret
-	}
-	return ret[0 : len(ret)-1]
-}
-
-func Sanitise(line string) string {
-	if !strings.ContainsAny(line, "\n\t\r") {
-		return line
-	}
-	reg := regexp.MustCompile("\\n|\\t|\\r")
-	return reg.ReplaceAllString(line, "")
-}
-
-func SingleSpace(line string) string {
-	if strings.Index(line, "  ") > -1 {
-		return strings.Join(strings.Fields(line), " ")
-	}
-	return line
-}
-
-func Timestamp(line string) string {
-	if line == "" {
-		return time.Now().Format("[" + time.Stamp + "]")
-	}
-	return time.Now().Format("["+time.Stamp+"]") + " " + line
-}
-
-func StripHtml(html string) string {
-	reg := regexp.MustCompile("<[^<]+?>|\\n|\\t|\\r")
-	return reg.ReplaceAllString(html, "")
-}
-
-func HasElementString(arr []string, match string) bool {
-	for _, line := range arr {
-		if strings.ToLower(line) == strings.ToLower(match) {
-			return true
-		}
-	}
-	return false
 }
