@@ -49,7 +49,7 @@ func (irc *IRC) Connect() bufio.Reader {
 	conn, err := net.Dial("tcp", irc.Config.Server+":"+irc.Config.Port)
 	irc.Conn = conn
 	if err != nil {
-		fmt.Println("Connection error")
+		logger.Error("Connection error")
 		os.Exit(1)
 	}
 	irc.Send(fmt.Sprintf("NICK %s", irc.Config.Nicknames[0]))
@@ -199,7 +199,7 @@ func (irc *IRC) Start() {
 		<-sem
 		line, prefix, err := out.ReadLine()
 		if err != nil {
-			fmt.Println("Connection error:", err.Error())
+			logger.Error("Connection error: " + err.Error())
 			os.Exit(4)
 		}
 		if prefix == true {
