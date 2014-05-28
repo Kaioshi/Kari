@@ -1,15 +1,15 @@
+# copy to "bot.conf" and edit appropriately.
 # formatting notes - make sure there's a space after the : - ie. field: entry
 command prefix: ;
-#server: irc.esper.net
-server: localhost
+server: irc.esper.net
+#server: localhost
 port: 6667
 
 # Bot details
-realname: Kari
+realname: Kari no Go!
 # make sure there's at least 3 nicks - comma separated
-nickname: Kari, Kari_, Kari__
+nicknames: Kari, Kari_, Kari__
 username: Kyuu
 
-# Autojoin list
+# Autojoin list - comma separated
 autojoin: #pyoshi
-
