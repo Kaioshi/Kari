@@ -3,14 +3,16 @@ package core
 import (
 	"Kari/irc"
 	"Kari/irc/events"
+	"Kari/lib"
 	"Kari/lib/logger"
 	"fmt"
 	"runtime"
 	"strings"
+	"time"
 )
 
 func Register(bot *irc.IRC) {
-	logger.Info("Registering Core hooks")
+	defer logger.Info(lib.TimeTrack(time.Now(), "Loading the Core plugin"))
 
 	// autojoin
 	events.EvListen(&events.EvListener{

@@ -4,9 +4,11 @@ package ial
 import (
 	"Kari/irc"
 	"Kari/irc/events"
+	"Kari/lib"
 	"Kari/lib/logger"
 	"fmt"
 	"strings"
+	"time"
 )
 
 var Channels map[string]*ChannelData = make(map[string]*ChannelData)
@@ -29,7 +31,7 @@ func (chd *ChannelData) String() string {
 }
 
 func Register(bot *irc.IRC) {
-	logger.Info("Registering Internal Address List hooks")
+	defer logger.Info(lib.TimeTrack(time.Now(), "Loading the Internal Address List plugin"))
 
 	events.CmdListen(&events.CmdListener{
 		Command: "ial",
