@@ -51,7 +51,7 @@ func (irc *IRC) Connect() bufio.Reader {
 		fmt.Println("Connection error")
 		os.Exit(1)
 	}
-	irc.Send(fmt.Sprintf("NICK %s", irc.Config.Nick))
+	irc.Send(fmt.Sprintf("NICK %s", irc.Config.Nicknames[0]))
 	irc.Send(fmt.Sprintf("USER %s localhost * :%s", irc.Config.Username, irc.Config.Realname))
 
 	out := bufio.NewReader(irc.Conn)

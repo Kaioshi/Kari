@@ -7,8 +7,9 @@ import (
 )
 
 type Config struct {
-	Server, Port, Nick, Username, Realname, Prefix string
-	Autojoin                                       []string
+	Server, Port, Username, Realname, Prefix string
+	Nicknames                                []string
+	Autojoin                                 []string
 }
 
 func (conf *Config) Parse() {
@@ -35,8 +36,8 @@ func (conf *Config) Parse() {
 			switch field {
 			case "server":
 				conf.Server = entry
-			case "nickname":
-				conf.Nick = entry[0:strings.Index(entry, ",")]
+			case "nicknames":
+				conf.Nicknames = strings.Split(entry, ", ")
 			case "username":
 				conf.Username = entry
 			case "realname":

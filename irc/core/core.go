@@ -22,6 +22,15 @@ func Register(bot *irc.IRC) {
 			bot.Join(strings.Join(bot.Config.Autojoin, ","))
 		}})
 
+	// nick is taken
+	events.EvListen(&events.EvListener{
+		Handle: "nickTaken",
+		Event:  "433",
+		Callback: func(input *events.Params) {
+			bot.Config.Nicknames = append(bot.Config.Nicknames[:0], bot.Config.Nicknames[1:]...)
+			bot.Send("NICK " + bot.Config.Nicknames[0])
+		}})
+
 	events.CmdListen(&events.CmdListener{
 		Command: "help",
 		Help:    "Helps!",
