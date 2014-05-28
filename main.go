@@ -7,17 +7,14 @@ import (
 	"Kari/irc/core"
 	"Kari/irc/ial"
 	"Kari/lib"
-	"Kari/lib/logger"
 	"Kari/lib/timer"
 	"Kari/plugins/google"
+	"Kari/plugins/manga"
 	"Kari/plugins/urbandictionary"
 	"Kari/plugins/youtube"
-	"fmt"
-	"time"
 )
 
 func main() {
-	start := time.Now()
 	conf := &config.Config{}
 	conf.Parse()
 	info := &irc.Info{}
@@ -31,8 +28,7 @@ func main() {
 	google.Register(bot)
 	youtube.Register(bot)
 	urbandictionary.Register(bot)
-
-	logger.Info(fmt.Sprintf("Took %s to register plugin hooks.", time.Since(start)*time.Microsecond))
+	manga.Register(bot)
 
 	timer.AddEvent("Garbage Collect", 15, lib.GC)
 
