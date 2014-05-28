@@ -3,6 +3,7 @@ package manga
 import (
 	"Kari/irc"
 	"Kari/irc/events"
+	"Kari/irc/ial"
 	"Kari/lib"
 	"Kari/lib/logger"
 	"Kari/lib/timer"
@@ -135,6 +136,19 @@ func checkUpdates(bot *irc.IRC, context string) {
 					}
 					delete(watched, key)
 					watched[key] = newEntry
+					if context != "" && !lib.HasElementString(watched[key].Announce, context) {
+						if context[0:1] == "#" {
+							method = "say"
+						} else {
+							method = "notice"
+						}
+						updates = append(updates, irc.RatedMessage{
+							Method: method,
+							Target: context,
+							Message: fmt.Sprintf("%s is out \\o/ ~ %s ~ %q",
+								entry.Title, entry.Link, entry.Desc),
+						})
+					}
 					for _, target := range watched[key].Announce {
 						if target[0:1] == "#" {
 							method = "say"
@@ -144,7 +158,7 @@ func checkUpdates(bot *irc.IRC, context string) {
 						updates = append(updates, irc.RatedMessage{
 							Method: method,
 							Target: target,
-							Message: fmt.Sprintf("%s it out \\o/ ~ %s ~ %s",
+							Message: fmt.Sprintf("%s is out \\o/ ~ %s ~ %q",
 								entry.Title, entry.Link, entry.Desc),
 						})
 					}
