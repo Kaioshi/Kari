@@ -10,6 +10,7 @@ import (
 	"net"
 	"os"
 	"strings"
+	"time"
 )
 
 var sem = make(chan int, 1)
@@ -71,17 +72,52 @@ func (irc *IRC) Part(channel string) {
 	}
 }
 
-func (irc *IRC) Say(target string, line string) {
-	var max int = (498 - len(target)) - len(irc.Info.User)
-	if len(line) > max {
-		logger.Debug(fmt.Sprintf("Trimmed %d length line to %d characters.", len(line), max))
-		line = line[0:max-3] + " .."
+type RatedMessage struct {
+	Method  string
+	Target  string
+	Message string
+}
+
+func (irc *IRC) Rated(rm *[]RatedMessage) {
+	var n int = 0
+	for _, message := range *rm {
+		func(method string, target string, message string, delay int) {
+			time.AfterFunc(time.Duration(delay)*time.Millisecond, func() {
+				switch method {
+				case "say":
+					irc.Say(target, message)
+				case "action":
+					irc.Action(target, message)
+				case "notice":
+					irc.Notice(target, message)
+				}
+			})
+		}(message.Method, message.Target, message.Message, n)
+		n += 250
 	}
+}
+
+func trimLine(magic int, target *string, user *string, line *string) {
+	var max int = (magic - len(*target)) - len(*user)
+	if len(*line) > max {
+		newline := *line
+		*line = newline[0:max-3] + " .."
+	}
+}
+
+func (irc *IRC) Say(target string, line string) {
+	trimLine(498, &target, &irc.Info.User, &line)
 	irc.Send(fmt.Sprintf("PRIVMSG %s :%s", target, line))
 }
 
 func (irc *IRC) Action(target string, line string) {
-	irc.Send("PRIVMSG " + target + " :\001ACTION " + line + "\001")
+	trimLine(489, &target, &irc.Info.User, &line)
+	irc.Send(fmt.Sprintf("PRIVMSG %s :\001ACTION %s\001", target, line))
+}
+
+func (irc *IRC) Notice(target string, line string) {
+	trimLine(499, &target, &irc.Info.User, &line)
+	irc.Send(fmt.Sprintf("NOTICE %s :%s", target, line))
 }
 
 // misc
