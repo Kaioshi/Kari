@@ -3,7 +3,6 @@ package manga
 import (
 	"Kari/irc"
 	"Kari/irc/events"
-	"Kari/irc/ial"
 	"Kari/lib"
 	"Kari/lib/logger"
 	"Kari/lib/timer"
