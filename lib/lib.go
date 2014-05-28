@@ -65,6 +65,11 @@ func HasElementString(arr []string, match string) bool {
 	return false
 }
 
+func TimeTrack(start time.Time, name string) string {
+	elapsed := time.Since(start)
+	return fmt.Sprintf("%s took %s", name, elapsed)
+}
+
 // STRING LISTS ---- why isn't this built in or less pointlessly complex
 type StrList struct {
 	List []string
