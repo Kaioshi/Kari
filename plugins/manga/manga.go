@@ -184,7 +184,11 @@ func Register(bot *irc.IRC) {
 				}
 				var titles string
 				for _, entry := range watched {
-					titles += entry.Manga + ", "
+					if entry.Manga == "" {
+						titles += entry.Title + ", "
+					} else {
+						titles += entry.Manga + ", "
+					}
 				}
 				bot.Say(input.Context, fmt.Sprintf("I'm currently watching for updates to %s.", titles[:len(titles)-2]))
 			case "add":
