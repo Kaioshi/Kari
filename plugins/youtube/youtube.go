@@ -34,7 +34,7 @@ type InfoEntry struct {
 }
 
 func Register(bot *irc.IRC) {
-	logger.Info("Registering YouTube hooks")
+	defer logger.Info(lib.TimeTrack(time.Now(), "Loading the YouTube plugin"))
 
 	events.CmdListen(&events.CmdListener{
 		Commands: []string{"youtube", "yt"},

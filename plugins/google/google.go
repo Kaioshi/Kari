@@ -7,10 +7,11 @@ import (
 	"Kari/lib/logger"
 	"Kari/lib/web"
 	"fmt"
+	"time"
 )
 
 func Register(bot *irc.IRC) {
-	logger.Info("Registering Google hooks")
+	defer logger.Info(lib.TimeTrack(time.Now(), "Loading the Google plugin"))
 
 	events.CmdListen(&events.CmdListener{
 		Commands: []string{"google", "g"},
