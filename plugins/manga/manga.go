@@ -19,6 +19,7 @@ import (
 var watched map[string]MSEntry
 
 type MSEntry struct {
+	Manga    string
 	Title    string
 	Link     string
 	Date     int64
@@ -124,6 +125,7 @@ func checkUpdates(bot *irc.IRC, context string) {
 				if entry.Date > watched[key].Date {
 					// update found
 					newEntry := MSEntry{
+						Manga:    entry.Title[:len(key)],
 						Title:    entry.Title,
 						Date:     entry.Date,
 						Desc:     entry.Desc,
@@ -182,7 +184,7 @@ func Register(bot *irc.IRC) {
 				}
 				var titles string
 				for _, entry := range watched {
-					titles += entry.Title + ", "
+					titles += entry.Manga + ", "
 				}
 				bot.Say(input.Context, fmt.Sprintf("I'm currently watching for updates to %s.", titles[:len(titles)-2]))
 			case "add":
