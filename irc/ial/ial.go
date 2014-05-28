@@ -30,6 +30,20 @@ func (chd *ChannelData) String() string {
 	return fmt.Sprintf("Users: %s", chd.User)
 }
 
+func Ison(channel string, nick string) bool {
+	lchan := strings.ToLower(channel)
+	if _, ok := Channels[lchan]; !ok {
+		return false
+	}
+	lnick := strings.ToLower(nick)
+	for key, _ := range Channels[lchan].User {
+		if key == lnick {
+			return true
+		}
+	}
+	return false
+}
+
 func Register(bot *irc.IRC) {
 	defer logger.Info(lib.TimeTrack(time.Now(), "Loading the Internal Address List plugin"))
 
