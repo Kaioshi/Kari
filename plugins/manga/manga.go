@@ -118,7 +118,8 @@ func checkUpdates(bot *irc.IRC, context string) {
 		return
 	}
 	keys := getKeys()
-	updates := false
+	updates := make([]irc.RatedMessage, 0)
+	var method string
 	for title, entry := range entries {
 		for _, key := range keys {
 			if strings.Index(title, key) > -1 {
@@ -135,15 +136,24 @@ func checkUpdates(bot *irc.IRC, context string) {
 					delete(watched, key)
 					watched[key] = newEntry
 					for _, target := range watched[key].Announce {
-						bot.Say(target, fmt.Sprintf("%s is out \\o/ ~ %s ~ %s",
-							entry.Title, entry.Link, entry.Desc))
+						if target[0:1] == "#" {
+							method = "say"
+						} else {
+							method = "notice"
+						}
+						updates = append(updates, irc.RatedMessage{
+							Method: method,
+							Target: target,
+							Message: fmt.Sprintf("%s it out \\o/ ~ %s ~ %s",
+								entry.Title, entry.Link, entry.Desc),
+						})
 					}
-					updates = true
 				}
 			}
 		}
 	}
-	if updates {
+	if len(updates) > 0 {
+		bot.Rated(&updates)
 		saveWatched()
 	} else if context != "" {
 		bot.Say(context, "Nothing new. :\\")
