@@ -16,9 +16,14 @@ import (
 	"time"
 )
 
-var watched map[string]MSEntry
+var manga Manga
 
-type MSEntry struct {
+type Manga struct {
+	MangaFox    map[string]MangaEntry
+	MangaStream map[string]MangaEntry
+}
+
+type MangaEntry struct {
 	Manga    string
 	Title    string
 	Link     string
@@ -27,52 +32,81 @@ type MSEntry struct {
 	Announce []string
 }
 
-func parseRSS(rss []byte) (map[string]MSEntry, error) {
-	ms := strings.Split(string(rss[bytes.Index(rss, []byte("<item>")):len(rss)-20]), "</item>")
-	entries := map[string]MSEntry{}
+func parseRSS(rss []byte, source string) (map[string]MangaEntry, error) {
+	src := strings.Split(lib.Sanitise(string(rss[bytes.Index(rss, []byte("<item>")):])), "</item>")
+	src = src[0 : len(src)-1]
+	entries := map[string]MangaEntry{}
 	var title, tmpDate string
-	for i, _ := range ms {
-		if ms[i] == "" {
+	var link [2]string
+	if source == "mangafox" {
+		link = [2]string{"<feedburner:origLink>", "</feedburner:origLink>"}
+	} else {
+		link = [2]string{"<link>", "</link>"}
+	}
+	for _, line := range src {
+		if line == "" {
 			continue
 		}
-		title = ms[i][strings.Index(ms[i], "<title>")+7 : strings.Index(ms[i], "</title>")]
-		tmpDate = ms[i][strings.Index(ms[i], "<pubDate>")+9 : strings.Index(ms[i], "</pubDate>")]
+		title = line[strings.Index(line, "<title>")+7 : strings.Index(line, "</title>")]
+		tmpDate = line[strings.Index(line, "<pubDate>")+9 : strings.Index(line, "</pubDate>")]
 		date, err := time.Parse("Mon, 2 Jan 2006 15:04:05 -0700", tmpDate)
 		if err != nil {
 			logger.Error(err.Error())
-			return nil, errors.New("parseRSS failed to parse time :" + tmpDate)
+			return nil, errors.New("parseRSS failed to parse time : " + tmpDate)
 		}
-		entries[strings.ToLower(title)] = MSEntry{
+		entries[strings.ToLower(title)] = MangaEntry{
 			Title: title,
-			Link:  ms[i][strings.Index(ms[i], "<link>")+6 : strings.Index(ms[i], "</link>")],
+			Link:  line[strings.Index(line, link[0])+len(link[0]) : strings.Index(line, link[1])],
 			Date:  date.Unix(),
-			Desc:  ms[i][strings.Index(ms[i], "<description>")+13 : strings.Index(ms[i], "</description>")],
+			Desc:  line[strings.Index(line, "<description>")+13 : strings.Index(line, "</description>")],
 		}
 	}
 	return entries, nil
 }
 
-func addManga(title string, context string, bot *irc.IRC) string {
-	if _, ok := watched[strings.ToLower(title)]; ok {
-		return title + " is already on the watch list."
-	}
-	watched[strings.ToLower(title)] = MSEntry{
-		Title:    title,
-		Announce: []string{context},
+func addManga(title string, context string, source string, bot *irc.IRC) string {
+	ltitle := strings.ToLower(title)
+	switch source {
+	case "MangaFox":
+		if _, ok := manga.MangaFox[ltitle]; ok {
+			return fmt.Sprintf("I'm already watching for %q updates on %s.", title, source)
+		}
+		manga.MangaFox[ltitle] = MangaEntry{
+			Title:    title,
+			Announce: []string{context},
+		}
+	case "MangaStream":
+		if _, ok := manga.MangaStream[ltitle]; ok {
+			return fmt.Sprintf("I'm already watching for %q updates on %s.", title, source)
+		}
+		manga.MangaStream[ltitle] = MangaEntry{
+			Title:    title,
+			Announce: []string{context},
+		}
 	}
 	saveWatched()
-	go checkUpdates(bot, "")
+	go checkUpdates(bot, "mangafox", "")
+	go checkUpdates(bot, "mangastream", "")
 	return "Added!"
 }
 
-func removeManga(title string) string {
+func removeManga(title string, source string) string {
 	ltitle := strings.ToLower(title)
-	if _, ok := watched[ltitle]; ok {
-		delete(watched, ltitle)
-		saveWatched()
-		return "Removed."
+	switch source {
+	case "MangaFox":
+		if _, ok := manga.MangaFox[ltitle]; ok {
+			delete(manga.MangaFox, ltitle)
+			saveWatched()
+			return "Removed."
+		}
+	case "MangaStream":
+		if _, ok := manga.MangaStream[ltitle]; ok {
+			delete(manga.MangaStream, ltitle)
+			saveWatched()
+			return "Removed."
+		}
 	}
-	return fmt.Sprintf("%q isn't on the MangaStream watch list.", title)
+	return fmt.Sprintf("%q isn't on the %s watch list.", title, source)
 }
 
 func loadWatched() {
@@ -81,12 +115,11 @@ func loadWatched() {
 		logger.Error(err.Error())
 		return
 	}
-	//var entries map[string]MSEntry
 	if err != nil {
 		logger.Error(err.Error())
 		return
 	}
-	err = json.Unmarshal(db, &watched)
+	err = json.Unmarshal(db, &manga)
 	if err != nil {
 		logger.Error(err.Error())
 		return
@@ -94,7 +127,7 @@ func loadWatched() {
 }
 
 func saveWatched() {
-	out, err := json.Marshal(watched)
+	out, err := json.Marshal(manga)
 	if err != nil {
 		logger.Error(err.Error())
 		return
@@ -103,21 +136,30 @@ func saveWatched() {
 	logger.Info("Saved Manga watch list.")
 }
 
-func checkUpdates(bot *irc.IRC, context string) {
-	logger.Info("Checking MangaStream...")
-	uri := "http://mangastream.com/rss"
+func checkUpdates(bot *irc.IRC, source string, context string) {
+	logger.Info("Checking Manga Sources for updates...")
+	var uri, message string
+	var watched map[string]MangaEntry
+	switch source {
+	case "mangafox":
+		uri = "http://feeds.feedburner.com/mangafox/latest_manga_chapters?format=xml"
+		watched = manga.MangaFox
+	case "mangastream":
+		uri = "http://mangastream.com/rss"
+		watched = manga.MangaStream
+	}
 	data, err := web.Get(&uri)
 	if err != "" {
 		logger.Error(err)
 		return
 	}
-	var entries map[string]MSEntry
-	entries, perr := parseRSS(data)
+	var entries map[string]MangaEntry
+	entries, perr := parseRSS(data, source)
 	if perr != nil {
 		logger.Error(perr.Error())
 		return
 	}
-	keys := getKeys()
+	keys := getKeys(source)
 	updates := make([]irc.RatedMessage, 0)
 	var method string
 	for title, entry := range entries {
@@ -125,7 +167,7 @@ func checkUpdates(bot *irc.IRC, context string) {
 			if strings.Index(title, key) > -1 {
 				if entry.Date > watched[key].Date {
 					// update found
-					newEntry := MSEntry{
+					newEntry := MangaEntry{
 						Manga:    entry.Title[:len(key)],
 						Title:    entry.Title,
 						Date:     entry.Date,
@@ -135,6 +177,13 @@ func checkUpdates(bot *irc.IRC, context string) {
 					}
 					delete(watched, key)
 					watched[key] = newEntry
+					switch source {
+					case "mangafox": // too much junk in mangafaucks's description
+						message = fmt.Sprintf("%s is out \\o/ ~ %s", entry.Title, entry.Link)
+					case "mangastream":
+						message = fmt.Sprintf("%s is out \\o/ ~ %s ~ %q",
+							entry.Title, entry.Link, entry.Desc)
+					}
 					if context != "" && !lib.HasElementString(watched[key].Announce, context) {
 						if context[0:1] == "#" {
 							method = "say"
@@ -142,10 +191,9 @@ func checkUpdates(bot *irc.IRC, context string) {
 							method = "notice"
 						}
 						updates = append(updates, irc.RatedMessage{
-							Method: method,
-							Target: context,
-							Message: fmt.Sprintf("%s is out \\o/ ~ %s ~ %q",
-								entry.Title, entry.Link, entry.Desc),
+							Method:  method,
+							Target:  context,
+							Message: message,
 						})
 					}
 					for _, target := range watched[key].Announce {
@@ -155,10 +203,9 @@ func checkUpdates(bot *irc.IRC, context string) {
 							method = "notice"
 						}
 						updates = append(updates, irc.RatedMessage{
-							Method: method,
-							Target: target,
-							Message: fmt.Sprintf("%s is out \\o/ ~ %s ~ %q",
-								entry.Title, entry.Link, entry.Desc),
+							Method:  method,
+							Target:  target,
+							Message: message,
 						})
 					}
 				}
@@ -173,9 +220,16 @@ func checkUpdates(bot *irc.IRC, context string) {
 	}
 }
 
-func getKeys() []string {
+func getKeys(source string) []string {
 	var keys []string
-	for key, _ := range watched {
+	var watched *map[string]MangaEntry
+	switch source {
+	case "mangafox":
+		watched = &manga.MangaFox
+	case "mangastream":
+		watched = &manga.MangaStream
+	}
+	for key, _ := range *watched {
 		keys = append(keys, key)
 	}
 	return keys
@@ -184,16 +238,18 @@ func getKeys() []string {
 func Register(bot *irc.IRC) {
 	defer logger.Info(lib.TimeTrack(time.Now(), "Loading the MangaStream plugin"))
 
-	watched = map[string]MSEntry{}
+	manga = Manga{map[string]MangaEntry{}, map[string]MangaEntry{}}
 	loadWatched()
-	timer.AddEvent("Checking MangaStream", 900, func() {
-		checkUpdates(bot, "")
+	timer.AddEvent("Checking Manga Sources", 900, func() {
+		go checkUpdates(bot, "mangafox", "")
+		go checkUpdates(bot, "mangastream", "")
 	})
 
 	events.CmdListen(&events.CmdListener{
 		Commands: []string{"mangastream", "ms"},
 		Help:     "Manages the MangaStream release watcher",
-		Syntax:   bot.Config.Prefix + "ms <add/remove/list> <manga title> - Example: " + bot.Config.Prefix + "ms add One Piece",
+		Syntax: fmt.Sprintf("%sms <add/remove/list> <manga title> - Example: %sms add One Piece",
+			bot.Config.Prefix, bot.Config.Prefix),
 		Callback: func(input *events.Params) {
 			if len(input.Args) == 0 {
 				bot.Say(input.Context, events.Help("ms", "syntax"))
@@ -201,33 +257,77 @@ func Register(bot *irc.IRC) {
 			}
 			switch strings.ToLower(input.Args[0]) {
 			case "list":
-				if len(watched) == 0 {
+				if len(manga.MangaStream) == 0 {
 					bot.Say(input.Context, "I'm not watching for any MangaStream releases right now. :<")
 					return
 				}
 				var titles string
-				for _, entry := range watched {
+				for _, entry := range manga.MangaStream {
 					if entry.Manga == "" {
 						titles += entry.Title + ", "
 					} else {
 						titles += entry.Manga + ", "
 					}
 				}
-				bot.Say(input.Context, fmt.Sprintf("I'm currently watching for updates to %s.", titles[:len(titles)-2]))
+				bot.Say(input.Context, fmt.Sprintf("I'm currently watching for %s updates to %s.",
+					"MangaStream", titles[:len(titles)-2]))
 			case "add":
 				if len(input.Args) < 2 {
 					bot.Say(input.Context, events.Help("ms", "syntax"))
 					return
 				}
-				bot.Say(input.Context, addManga(strings.Join(input.Args[1:], " "), input.Context, bot))
+				bot.Say(input.Context, addManga(strings.Join(input.Args[1:], " "), input.Context, "MangaStream", bot))
 			case "remove":
 				if len(input.Args) < 2 {
 					bot.Say(input.Context, events.Help("ms", "syntax"))
 					return
 				}
-				bot.Say(input.Context, removeManga(strings.Join(input.Args[1:], " ")))
+				bot.Say(input.Context, removeManga(strings.Join(input.Args[1:], " "), "MangaStream"))
 			case "check":
-				checkUpdates(bot, input.Context)
+				checkUpdates(bot, "mangastream", input.Context)
+			}
+		}})
+
+	events.CmdListen(&events.CmdListener{ // not sure how to make this neat yet ^ v
+		Commands: []string{"mangafox", "mf"},
+		Help:     "Manages the MangaFox release watcher",
+		Syntax: fmt.Sprintf("%smf <add/remove/list> <manga title> - Example: %smf add One Piece",
+			bot.Config.Prefix, bot.Config.Prefix),
+		Callback: func(input *events.Params) {
+			if len(input.Args) == 0 {
+				bot.Say(input.Context, events.Help("mf", "syntax"))
+				return
+			}
+			switch strings.ToLower(input.Args[0]) {
+			case "list":
+				if len(manga.MangaFox) == 0 {
+					bot.Say(input.Context, "I'm not watching for any MangaFox releases right now. :<")
+					return
+				}
+				var titles string
+				for _, entry := range manga.MangaFox {
+					if entry.Manga == "" {
+						titles += entry.Title + ", "
+					} else {
+						titles += entry.Manga + ", "
+					}
+				}
+				bot.Say(input.Context, fmt.Sprintf("I'm currently watching for %s updates to %s.",
+					"MangaFox", titles[:len(titles)-2]))
+			case "add":
+				if len(input.Args) < 2 {
+					bot.Say(input.Context, events.Help("mf", "syntax"))
+					return
+				}
+				bot.Say(input.Context, addManga(strings.Join(input.Args[1:], " "), input.Context, "MangaFox", bot))
+			case "remove":
+				if len(input.Args) < 2 {
+					bot.Say(input.Context, events.Help("mf", "syntax"))
+					return
+				}
+				bot.Say(input.Context, removeManga(strings.Join(input.Args[1:], " "), "MangaFox"))
+			case "check":
+				checkUpdates(bot, "mangafox", input.Context)
 			}
 		}})
 }
