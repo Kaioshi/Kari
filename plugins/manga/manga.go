@@ -106,10 +106,6 @@ func loadWatched(manga *Manga) {
 		logger.Error(err.Error())
 		return
 	}
-	if err != nil {
-		logger.Error(err.Error())
-		return
-	}
 	err = json.Unmarshal(db, manga)
 	if err != nil {
 		logger.Error(err.Error())
