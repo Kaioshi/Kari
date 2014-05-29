@@ -106,18 +106,48 @@ func trimLine(magic int, target *string, user *string, line *string) {
 }
 
 func (irc *IRC) Say(target string, line string) {
-	trimLine(498, &target, &irc.Info.User, &line)
-	irc.Send(fmt.Sprintf("PRIVMSG %s :%s", target, line))
+	var magic int = (498 - len(target)) - len(irc.Info.User)
+	var i, index int
+	for i = 0; i < 3; i++ {
+		if len(line) > magic {
+			index = strings.LastIndex(line[0:magic], " ")
+			irc.Send(fmt.Sprintf("PRIVMSG %s :%s", target, line[0:index]))
+			line = strings.TrimLeft(line[index:], " ")
+		} else {
+			irc.Send(fmt.Sprintf("PRIVMSG %s :%s", target, line))
+			break
+		}
+	}
 }
 
 func (irc *IRC) Action(target string, line string) {
-	trimLine(489, &target, &irc.Info.User, &line)
-	irc.Send(fmt.Sprintf("PRIVMSG %s :\001ACTION %s\001", target, line))
+	var magic int = (489 - len(target)) - len(irc.Info.User)
+	var i, index int
+	for i = 0; i < 3; i++ {
+		if len(line) > magic {
+			index = strings.LastIndex(line[0:magic], " ")
+			irc.Send(fmt.Sprintf("PRIVMSG %s :\001ACTION %s\001", target, line[0:index]))
+			line = strings.TrimLeft(line[index:], " ")
+		} else {
+			irc.Send(fmt.Sprintf("PRIVMSG %s :\001ACTION %s\001", target, line))
+			break
+		}
+	}
 }
 
 func (irc *IRC) Notice(target string, line string) {
-	trimLine(499, &target, &irc.Info.User, &line)
-	irc.Send(fmt.Sprintf("NOTICE %s :%s", target, line))
+	var magic int = (499 - len(target)) - len(irc.Info.User)
+	var i, index int
+	for i = 0; i < 3; i++ {
+		if len(line) > magic {
+			index = strings.LastIndex(line[0:magic], " ")
+			irc.Send(fmt.Sprintf("NOTICE %s :%s", target, line[0:index]))
+			line = strings.TrimLeft(line[index:], " ")
+		} else {
+			irc.Send(fmt.Sprintf("NOTICE %s :%s", target, line))
+			break
+		}
+	}
 }
 
 // misc
