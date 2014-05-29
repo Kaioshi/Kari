@@ -35,12 +35,6 @@ func parseRSS(rss []byte, source string) (map[string]MangaEntry, error) {
 	src = src[0 : len(src)-1]
 	entries := map[string]MangaEntry{}
 	var title, tmpDate string
-	var link [2]string
-	if source == "mangafox" {
-		link = [2]string{"<feedburner:origLink>", "</feedburner:origLink>"}
-	} else {
-		link = [2]string{"<link>", "</link>"}
-	}
 	for _, line := range src {
 		if line == "" {
 			continue
@@ -54,7 +48,7 @@ func parseRSS(rss []byte, source string) (map[string]MangaEntry, error) {
 		}
 		entries[strings.ToLower(title)] = MangaEntry{
 			Title: title,
-			Link:  line[strings.Index(line, link[0])+len(link[0]) : strings.Index(line, link[1])],
+			Link:  line[strings.Index(line, "<link>")+6 : strings.Index(line, "</link>")],
 			Date:  date.Unix(),
 			Desc:  line[strings.Index(line, "<description>")+13 : strings.Index(line, "</description>")],
 		}
@@ -134,24 +128,25 @@ func saveWatched(manga *Manga) {
 }
 
 func checkUpdates(bot *irc.IRC, source string, context string) {
-	logger.Info("Checking Manga Sources for updates...")
 	var manga Manga
-	loadWatched(&manga)
 	var uri, message string
 	var watched map[string]MangaEntry
+	loadWatched(&manga)
 	switch source {
 	case "mangafox":
-		uri = "http://feeds.feedburner.com/mangafox/latest_manga_chapters?format=xml"
+		uri = "http://mangafox.me/rss/latest_manga_chapters.xml"
 		watched = manga.MangaFox
 	case "mangastream":
 		uri = "http://mangastream.com/rss"
 		watched = manga.MangaStream
 	}
+
 	data, err := web.Get(&uri)
 	if err != "" {
 		logger.Error(err)
 		return
 	}
+
 	var entries map[string]MangaEntry
 	entries, perr := parseRSS(data, source)
 	if perr != nil {
