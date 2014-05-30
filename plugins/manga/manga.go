@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"html"
 	"io/ioutil"
 	"strings"
 	"time"
@@ -39,7 +40,7 @@ func parseRSS(rss []byte, source string) (map[string]MangaEntry, error) {
 		if line == "" {
 			continue
 		}
-		title = line[strings.Index(line, "<title>")+7 : strings.Index(line, "</title>")]
+		title = html.UnescapeString(line[strings.Index(line, "<title>")+7 : strings.Index(line, "</title>")])
 		tmpDate = line[strings.Index(line, "<pubDate>")+9 : strings.Index(line, "</pubDate>")]
 		date, err := time.Parse("Mon, 2 Jan 2006 15:04:05 -0700", tmpDate)
 		if err != nil {
