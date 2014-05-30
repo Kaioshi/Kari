@@ -1,0 +1,1 @@
+{"butt":"say butts","front":"say fronts","test":"say this is what you wrote: {args*}","wiki":"g site:wikipedia.org {args*}"}
