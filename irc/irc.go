@@ -4,6 +4,7 @@ import (
 	"Kari/config"
 	"Kari/irc/events"
 	"Kari/lib"
+	"Kari/lib/alias"
 	"Kari/lib/logger"
 	"bufio"
 	"fmt"
@@ -152,6 +153,8 @@ func (irc *IRC) Notice(target string, line string) {
 
 // misc
 func (irc *IRC) findParams(params *events.Params, line string, args []string) {
+	var command string
+	var index int
 	if strings.Index(args[0], "!") == -1 { // server message?
 		params.Context = args[3]
 		params.Nick = args[0][1:]
@@ -170,9 +173,18 @@ func (irc *IRC) findParams(params *events.Params, line string, args []string) {
 			params.Context = params.Nick
 		}
 		if args[3][1:2] == irc.Config.Prefix && args[3][2:3] != "" {
-			params.Data = strings.Join(args[4:len(args)], " ")
-			params.Command = args[3][2:]
-			params.Args = args[4:len(args)]
+			command = args[3][2:]
+			if alias.DB.HasKey(command) { // temporary, need alias/args parser
+				aliasEntry := alias.DB.GetOne(command)
+				index = strings.Index(aliasEntry, " ")
+				params.Command = aliasEntry[:index]
+				params.Data = strings.Replace(aliasEntry[index+1:], "{args*}", strings.Join(args[4:len(args)], " "), -1)
+				params.Args = strings.Fields(params.Data)
+			} else {
+				params.Command = args[3][2:]
+				params.Args = args[4:len(args)]
+				params.Data = strings.Join(params.Args, " ")
+			}
 		} else {
 			params.Data = strings.Join(args[3:len(args)], " ")[1:]
 		}

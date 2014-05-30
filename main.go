@@ -7,7 +7,9 @@ import (
 	"Kari/irc/core"
 	"Kari/irc/ial"
 	"Kari/lib"
+	"Kari/lib/alias"
 	"Kari/lib/timer"
+	"Kari/plugins/aliasfrontend"
 	"Kari/plugins/google"
 	"Kari/plugins/manga"
 	"Kari/plugins/urbandictionary"
@@ -23,6 +25,8 @@ func main() {
 	// required
 	core.Register(bot)
 	ial.Register(bot)
+	alias.Register()
+	aliasfrontend.Register(bot)
 
 	// optional - comment out if you don't want 'em
 	google.Register(bot)
