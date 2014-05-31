@@ -52,7 +52,7 @@ func Register(bot *irc.IRC) {
 				alias.DB.SaveOne(input.Args[1], strings.Join(input.Args[2:], " "))
 				bot.Say(input.Context, "Added!")
 			case "remove":
-				if argLen < 3 {
+				if argLen < 2 {
 					bot.Say(input.Context, events.Help("alias", "syntax"))
 					return
 				}
