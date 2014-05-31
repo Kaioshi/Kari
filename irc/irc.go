@@ -153,35 +153,6 @@ func (irc *IRC) Notice(target string, line string) {
 	}
 }
 
-type AliasEvent struct {
-	From    string
-	Context string
-	Args    string
-	Args1   string
-	Args2   string
-	Args3   string
-	Args4   string
-}
-
-func (ae *AliasEvent) populate(params *events.Params, args []string) {
-	var argLen int = len(args)
-	if argLen > 0 {
-		ae.Args = strings.Join(args, " ")
-		ae.Args1 = args[0]
-		if argLen > 1 {
-			ae.Args2 = args[1]
-		}
-		if argLen > 2 {
-			ae.Args3 = args[2]
-		}
-		if argLen > 3 {
-			ae.Args4 = args[3]
-		}
-	}
-	ae.From = params.Nick
-	ae.Context = params.Context
-}
-
 // misc
 func (irc *IRC) findParams(params *events.Params, line string, args []string) {
 	var command string
@@ -210,10 +181,10 @@ func (irc *IRC) findParams(params *events.Params, line string, args []string) {
 				index = strings.Index(aliasEntry, " ")
 				params.Command = aliasEntry[:index]
 				if strings.Index(aliasEntry, "{{") > -1 {
-					var aEvent AliasEvent
-					aEvent.populate(params, args[4:len(args)])
+					var aEvent alias.Event
+					aEvent.Populate(params, args[4:len(args)])
 					var out bytes.Buffer
-					t, err := template.New(command).Parse(aliasEntry[index+1:])
+					t, err := template.New(command).Funcs(aEvent.TmplFuncs()).Parse(aliasEntry[index+1:])
 					if err != nil {
 						params.Data = fmt.Sprintf("Couldn't parse %q template: %s", aliasEntry, err.Error())
 						logger.Error(params.Data)
