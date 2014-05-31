@@ -62,11 +62,15 @@ func (sl *StringListDB) GetKeys() []string {
 func (sl *StringListDB) Save() {
 	var err error
 	var entries string
-	for key, entry := range sl.Entry {
-		entries += fmt.Sprintf("%s %s\n", key, entry)
+	if len(sl.Entry) > 0 {
+		for key, entry := range sl.Entry {
+			entries += fmt.Sprintf("%s %s\n", key, entry)
+		}
+		entries = entries[:len(entries)-1] // no trailing \n
+		err = ioutil.WriteFile("db/"+sl.Filename, []byte(entries), 0666)
+	} else {
+		err = ioutil.WriteFile("db/"+sl.Filename, []byte{}, 0666)
 	}
-	entries = entries[:len(entries)-1] // no trailing \n
-	err = ioutil.WriteFile("db/"+sl.Filename, []byte(entries), 0666)
 	if err != nil {
 		logger.Error(fmt.Sprintf("[StringListDB.Save()] Couldn't save to db/%s -> %s", sl.Filename, err.Error()))
 		return
@@ -157,7 +161,11 @@ func (sdb *StringDB) Save() {
 		logger.Error(fmt.Sprintf("[StringDB.Save()] Couldn't Marshal %s JSON -> %s", sdb.Filename, err.Error()))
 		return
 	}
-	err = ioutil.WriteFile("db/"+sdb.Filename, data, 0666)
+	if len(data) > 0 {
+		err = ioutil.WriteFile("db/"+sdb.Filename, data, 0666)
+	} else {
+		err = ioutil.WriteFile("db/"+sdb.Filename, []byte{}, 0666)
+	}
 	if err != nil {
 		logger.Error(fmt.Sprintf("[StringDB.Save()] Couldn't save db/%s -> %s", sdb.Filename, err.Error()))
 		return
