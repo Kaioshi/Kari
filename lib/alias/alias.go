@@ -5,7 +5,6 @@ import (
 	"Kari/lib"
 	"Kari/lib/logger"
 	"Kari/lib/storage"
-	"math/rand"
 	"strings"
 	"text/template"
 	"time"
@@ -30,14 +29,12 @@ func (e *Event) Populate(params *events.Params, args []string) {
 func (e *Event) TmplFuncs() template.FuncMap {
 	return template.FuncMap{
 		"args": e.GetArg,
-		"rand": e.RandomSelect,
+		"rand": randomSelect,
 	}
 }
 
-func (e *Event) RandomSelect(choices string) string {
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	selectFrom := strings.Split(choices, " | ")
-	return selectFrom[r.Intn(len(selectFrom))]
+func randomSelect(choices string) string {
+	return *lib.RandSelect(strings.Split(choices, " | "))
 }
 
 func (e *Event) GetArg(index int) string {

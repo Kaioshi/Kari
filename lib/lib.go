@@ -2,6 +2,7 @@ package lib
 
 import (
 	"fmt"
+	"math/rand"
 	"regexp"
 	"runtime"
 	"strings"
@@ -42,6 +43,11 @@ func SingleSpace(line string) string {
 		return strings.Join(strings.Fields(line), " ")
 	}
 	return line
+}
+
+func RandSelect(choices []string) *string {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	return &choices[r.Intn(len(choices))]
 }
 
 func Timestamp(line string) string {
