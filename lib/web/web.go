@@ -1,12 +1,16 @@
 package web
 
 import (
+	"Kari/lib"
+	"Kari/lib/logger"
 	"encoding/json"
 	"fmt"
 	"html"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"regexp"
+	"strings"
 )
 
 type GoogleResultEntry struct {
@@ -60,6 +64,40 @@ func Google(searchTerm string, results int) GoogleResult {
 		}
 	}
 	return resp
+}
+
+func GetTitle(rawuri string) string {
+	var index int
+	ext := rawuri[strings.LastIndex(rawuri, "//")+2:]
+	if index = strings.LastIndex(ext, "/"); index > 0 {
+		ext = ext[index+1:]
+		if index = strings.Index(ext, "."); index > -1 {
+			ext = ext[index+1:]
+			allow := []string{"htm", "html", "asp", "aspx", "php", "php3", "php5"}
+			if !lib.HasElementString(allow, ext) {
+				logger.Debug(fmt.Sprintf("[web.GetTitle()] Not an OK file extension: %s -> %s",
+					rawuri, ext))
+				return ""
+			}
+		}
+	}
+	body, err := Get(&rawuri)
+	if err != "" {
+		return ""
+	}
+	r, regErr := regexp.Compile("<title?[^>]+>([^<]+)<\\/title>")
+	if regErr != nil {
+		logger.Error("[web.GetTitle()] Couldn't compile regex title regex")
+		return ""
+	}
+	if title := r.FindString(string(body)); title != "" {
+		rooturl := rawuri[strings.Index(rawuri, "//")+2:]
+		if index = strings.Index(rooturl, "/"); index > -1 {
+			rooturl = rooturl[:index]
+		}
+		return fmt.Sprintf("%s ~ %s", html.UnescapeString(lib.StripHtml(title)), rooturl)
+	}
+	return ""
 }
 
 func Get(rawuri *string) ([]byte, string) {
