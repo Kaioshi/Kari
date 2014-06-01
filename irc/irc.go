@@ -180,6 +180,9 @@ func (irc *IRC) findParams(params *events.Params, line string, args []string) {
 				aliasEntry := alias.DB.GetOne(command)
 				index = strings.Index(aliasEntry, " ")
 				params.Command = aliasEntry[:index]
+				if strings.Index(aliasEntry, "${") > -1 {
+					aliasEntry = alias.ReplaceVars(aliasEntry)
+				}
 				if strings.Index(aliasEntry, "{{") > -1 {
 					var aEvent alias.Event
 					aEvent.Populate(params, args[4:len(args)])
@@ -198,9 +201,12 @@ func (irc *IRC) findParams(params *events.Params, line string, args []string) {
 					}
 					params.Data = out.String()
 					params.Args = strings.Fields(params.Data)
+				} else {
+					params.Data = aliasEntry[index+1:]
+					params.Args = strings.Fields(params.Data)
 				}
 			} else {
-				params.Command = args[3][2:]
+				params.Command = command
 				params.Args = args[4:len(args)]
 				params.Data = strings.Join(params.Args, " ")
 			}

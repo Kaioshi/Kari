@@ -34,7 +34,7 @@ func main() {
 	urbandictionary.Register(bot)
 	manga.Register(bot)
 
-	timer.AddEvent("Garbage Collect", 15, lib.GC)
+	timer.AddEvent("Garbage Collect", 60, lib.GC)
 
 	bot.Start()
 }
