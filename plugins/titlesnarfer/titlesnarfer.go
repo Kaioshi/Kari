@@ -7,7 +7,6 @@ import (
 	"Kari/lib"
 	"Kari/lib/logger"
 	"Kari/lib/web"
-	"fmt"
 )
 
 func Register(bot *irc.IRC) {
@@ -18,7 +17,6 @@ func Register(bot *irc.IRC) {
 		Event:  "PRIVMSG",
 		Regex:  ".*(?:https?:\\/\\/[^\\001 ]+)",
 		Callback: func(input *events.Params) {
-			bot.Say(input.Context, fmt.Sprintf("URL: %q", input.Match))
 			bot.Say(input.Context, web.GetTitle(input.Match))
 		}})
 }
