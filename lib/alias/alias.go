@@ -1,6 +1,7 @@
 package alias
 
 import (
+	"Kari/config"
 	"Kari/irc/events"
 	"Kari/lib"
 	"Kari/lib/logger"
@@ -14,30 +15,55 @@ import (
 
 var DB storage.StringListDB
 var Vars storage.StringListDB
+var Config *config.Config
 
 type Event struct {
-	From    string
-	Context string
-	Data    string
-	Args    []string
+	From        string
+	Context     string
+	Data        string
+	WhippingBoy string
+	Args        []string
 }
 
-func (e *Event) Populate(params *events.Params, args []string) {
+func (e *Event) Populate(params *events.Params, args []string, aliasEntry *string) {
 	e.Data = strings.Join(args, " ")
 	e.Args = args
 	e.From = params.Nick
 	e.Context = params.Context
+	if strings.Index(*aliasEntry, ".WhippingBoy") > -1 {
+		e.WhippingBoy = *lib.RandSelect(Config.WhippingBoys)
+	}
 }
 
 func (e *Event) TmplFuncs() template.FuncMap {
 	return template.FuncMap{
-		"args": e.GetArg,
-		"rand": randomSelect,
+		"args":  e.GetArg,
+		"rand":  randomSelect,
+		"first": firstNotEmpty,
 	}
 }
 
-func randomSelect(choices string) string {
-	return *lib.RandSelect(strings.Split(choices, " | "))
+func randomSelect(choices ...string) string {
+	var choice string
+	if len(choices) > 1 {
+		choice = *lib.RandSelect(choices)
+	} else {
+		choice = choices[0]
+	}
+	if strings.Index(choice, " | ") > -1 {
+		return *lib.RandSelect(strings.Split(choice, " | "))
+	}
+	return choice
+
+}
+
+func firstNotEmpty(args ...string) string {
+	for _, arg := range args {
+		if len(arg) > 0 {
+			return arg
+		}
+	}
+	return ""
 }
 
 func (e *Event) GetArg(index int) string {
@@ -71,8 +97,9 @@ func ReplaceVars(aliasStr string) string {
 	return aliasStr
 }
 
-func Register() {
+func Register(conf *config.Config) {
 	defer logger.Info(lib.TimeTrack(time.Now(), "Loading the Alias Backend plugin"))
 	DB = *storage.NewStringListDB("alias.db")
 	Vars = *storage.NewStringListDB("variables.db")
+	Config = conf
 }

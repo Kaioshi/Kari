@@ -161,7 +161,7 @@ func (irc *IRC) findParams(params *events.Params, line string, args []string) {
 		params.Context = args[3]
 		params.Nick = args[0][1:]
 		params.Args = args[1:]
-		params.Data = strings.Join(args[1:], " ")
+		params.Data = line
 		return
 	}
 	params.Context = args[2]
@@ -185,7 +185,7 @@ func (irc *IRC) findParams(params *events.Params, line string, args []string) {
 				}
 				if strings.Index(aliasEntry, "{{") > -1 {
 					var aEvent alias.Event
-					aEvent.Populate(params, args[4:len(args)])
+					aEvent.Populate(params, args[4:len(args)], &aliasEntry)
 					var out bytes.Buffer
 					t, err := template.New(command).Funcs(aEvent.TmplFuncs()).Parse(aliasEntry[index+1:])
 					if err != nil {
@@ -238,6 +238,9 @@ func (irc *IRC) findParams(params *events.Params, line string, args []string) {
 	}
 	if params.Args == nil {
 		params.Args = args
+	}
+	if params.Data == "" {
+		params.Data = line
 	}
 	//fmt.Println(params)
 }
