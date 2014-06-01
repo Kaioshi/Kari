@@ -71,6 +71,10 @@ func HasElementString(arr []string, match string) bool {
 	return false
 }
 
+func TimeNow() time.Time {
+	return time.Now()
+}
+
 func TimeTrack(start time.Time, name string) string {
 	elapsed := time.Since(start)
 	return fmt.Sprintf("%s took %s", name, elapsed)
