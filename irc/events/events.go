@@ -4,10 +4,12 @@ package events
 import (
 	"Kari/lib/logger"
 	"fmt"
+	"regexp"
 )
 
-var eventListeners = make([]EvListener, 0)
-var commandListeners = make([]CmdListener, 0)
+var eventListeners map[string][]*EvListener = map[string][]*EvListener{}
+var complexListeners map[string][]*ComplexEventListener = map[string][]*ComplexEventListener{}
+var commandListeners map[string]*CmdListener = map[string]*CmdListener{}
 
 func CommandList() []string {
 	cmdList := make([]string, 0)
@@ -24,32 +26,15 @@ func CommandList() []string {
 }
 
 func Help(command string, helpType string) string {
-	var hit bool = false
-	var hitIndex int = 0
-	for i, cmd := range commandListeners {
-		if len(cmd.Commands) > 0 {
-			for k, _ := range cmd.Commands {
-				if cmd.Commands[k] == command {
-					hit = true
-					hitIndex = i
-					break
-				}
-			}
-		} else if command == cmd.Command {
-			hit = true
-			hitIndex = i
-			break
-		}
-	}
-	if hit {
+	if _, ok := commandListeners[command]; ok {
 		switch helpType {
 		case "syntax":
-			return fmt.Sprintf("[Help] %s", commandListeners[hitIndex].Syntax)
+			return fmt.Sprintf("[Help] %s", commandListeners[command].Syntax)
 		case "help":
-			return fmt.Sprintf("[Help] %s", commandListeners[hitIndex].Help)
+			return fmt.Sprintf("[Help] %s", commandListeners[command].Help)
 		}
 	}
-	return fmt.Sprintf("No %s found for \"%s\" :\\", helpType, command)
+	return fmt.Sprintf("No %s found for %q :\\", helpType, command)
 }
 
 type EvListener struct {
@@ -66,17 +51,30 @@ type CmdListener struct {
 	Callback func(input *Params)
 }
 
+type ComplexEventListener struct {
+	Handle   string
+	Event    string
+	Regex    string
+	r        regexp.Regexp
+	Callback func(input *Params)
+}
+
 type Params struct {
 	Context, Nick, Address, Data, Command string
 	Newnick, Kicknick, Message            string
+	Match                                 string
 	Args                                  []string
 }
 
-func (c CmdListener) String() string {
+func (cpe *ComplexEventListener) String() string {
+	return fmt.Sprintf("Handle: %s, Event: %s, Regex: %s", cpe.Handle, cpe.Event, cpe.Regex)
+}
+
+func (c *CmdListener) String() string {
 	return fmt.Sprintf("Command: %s, Help: %s, Syntax: %s", c.Command, c.Help, c.Syntax)
 }
 
-func (e EvListener) String() string {
+func (e *EvListener) String() string {
 	return fmt.Sprintf("Handle: %s, Event: %s", e.Handle, e.Event)
 }
 
@@ -92,31 +90,51 @@ func (p *Params) String() string {
 		p.Context, p.Nick, p.Address, p.Data, p.Command, args, p.Newnick, p.Kicknick, p.Message)
 }
 
+func EvListenComplex(event *ComplexEventListener) {
+	r, err := regexp.Compile(event.Regex)
+	if err != nil {
+		logger.Error(fmt.Sprintf("EvListenComplex: Couldn't compile %s's Regex: %s",
+			event.Handle, event.Regex))
+		return
+	}
+	event.r = *r
+	complexListeners[event.Event] = append(complexListeners[event.Event], event)
+}
+
 func CmdListen(command *CmdListener) {
-	commandListeners = append(commandListeners, *command)
+	if len(command.Commands) > 0 {
+		commandListeners[command.Commands[0]] = command
+	} else {
+		commandListeners[command.Command] = command
+	}
 }
 
 func EvListen(event *EvListener) {
-	eventListeners = append(eventListeners, *event)
+	eventListeners[event.Event] = append(eventListeners[event.Event], event)
 }
 
 func Emit(event string, input *Params) {
-	if event == "PRIVMSG" || event == "NOTICE" { // this seems wasteful somehow. TODO: make this efficient when you know how~
-		for _, listener := range commandListeners {
-			if len(listener.Commands) > 0 {
-				for _, command := range listener.Commands {
-					if command == input.Command {
-						go fireCommand(listener, input, command)
+	if event == "PRIVMSG" || event == "NOTICE" {
+		for command, _ := range commandListeners {
+			if len(commandListeners[command].Commands) > 0 {
+				for _, subcmd := range commandListeners[command].Commands {
+					if subcmd == input.Command {
+						go fireCommand(*commandListeners[command], input, command)
 					}
 				}
-			} else if input.Command == listener.Command {
-				go fireCommand(listener, input, listener.Command)
+			} else if input.Command == command {
+				go fireCommand(*commandListeners[command], input, command)
 			}
 		}
 	}
-	for _, listener := range eventListeners {
-		if listener.Event == event {
-			go fireEvent(listener, input)
+	if events, ok := eventListeners[event]; ok {
+		for _, event := range events {
+			go fireEvent(*event, input)
+		}
+	}
+	if events, ok := complexListeners[event]; ok {
+		for _, event := range events {
+			go fireComplexEvent(*event, input)
 		}
 	}
 }
@@ -131,8 +149,17 @@ func fireEvent(e EvListener, input *Params) {
 	e.Callback(input)
 }
 
+func fireComplexEvent(cpe ComplexEventListener, input *Params) {
+	if match := cpe.r.FindString(input.Data); match != "" {
+		defer catchPanic(fmt.Sprintf("complex event %s (%s)",
+			cpe.Event, cpe.Regex), cpe.Handle)
+		input.Match = match
+		cpe.Callback(input)
+	}
+}
+
 func catchPanic(listenType string, handle string) {
 	if e := recover(); e != nil {
-		logger.Error(fmt.Sprintf("== Error in %s \"%s\": %s", listenType, handle, e))
+		logger.Error(fmt.Sprintf("Caught panic in %s \"%s\": %s", listenType, handle, e))
 	}
 }
