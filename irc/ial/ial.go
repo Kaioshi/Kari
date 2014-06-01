@@ -8,7 +8,6 @@ import (
 	"Kari/lib/logger"
 	"fmt"
 	"strings"
-	"time"
 )
 
 var Channels map[string]*ChannelData = make(map[string]*ChannelData)
@@ -45,7 +44,7 @@ func Ison(channel string, nick string) bool {
 }
 
 func Register(bot *irc.IRC) {
-	defer logger.Info(lib.TimeTrack(time.Now(), "Loading the Internal Address List plugin"))
+	defer logger.Info(lib.TimeTrack(lib.TimeNow(), "Loading the Internal Address List plugin"))
 
 	events.CmdListen(&events.CmdListener{
 		Command: "ial",
