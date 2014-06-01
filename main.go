@@ -12,6 +12,7 @@ import (
 	"Kari/plugins/aliasfrontend"
 	"Kari/plugins/google"
 	"Kari/plugins/manga"
+	"Kari/plugins/titlesnarfer"
 	"Kari/plugins/urbandictionary"
 	"Kari/plugins/youtube"
 )
@@ -25,7 +26,7 @@ func main() {
 	// required
 	core.Register(bot)
 	ial.Register(bot)
-	alias.Register()
+	alias.Register(conf)
 	aliasfrontend.Register(bot)
 
 	// optional - comment out if you don't want 'em
@@ -33,8 +34,9 @@ func main() {
 	youtube.Register(bot)
 	urbandictionary.Register(bot)
 	manga.Register(bot)
+	titlesnarfer.Register(bot)
 
-	timer.AddEvent("Garbage Collect", 60, lib.GC)
+	timer.AddEvent("Garbage Collect", 15, lib.GC)
 
 	bot.Start()
 }

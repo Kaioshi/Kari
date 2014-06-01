@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
-	"time"
 )
 
 type UDResponse struct {
@@ -24,7 +23,7 @@ type ListEntry struct {
 }
 
 func Register(bot *irc.IRC) {
-	defer logger.Info(lib.TimeTrack(time.Now(), "Loading the Urban Dictionary plugin"))
+	defer logger.Info(lib.TimeTrack(lib.TimeNow(), "Loading the Urban Dictionary plugin"))
 
 	events.CmdListen(&events.CmdListener{
 		Commands: []string{"urbandictionary", "ud"},

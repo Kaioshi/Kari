@@ -8,11 +8,10 @@ import (
 	"Kari/lib/logger"
 	"fmt"
 	"strings"
-	"time"
 )
 
 func Register(bot *irc.IRC) {
-	defer logger.Info(lib.TimeTrack(time.Now(), "Loading the Alias Frontend plugin"))
+	defer logger.Info(lib.TimeTrack(lib.TimeNow(), "Loading the Alias Frontend plugin"))
 
 	events.CmdListen(&events.CmdListener{
 		Command: "var",

@@ -8,11 +8,10 @@ import (
 	"fmt"
 	"runtime"
 	"strings"
-	"time"
 )
 
 func Register(bot *irc.IRC) {
-	defer logger.Info(lib.TimeTrack(time.Now(), "Loading the Core plugin"))
+	defer logger.Info(lib.TimeTrack(lib.TimeNow(), "Loading the Core plugin"))
 
 	// autojoin
 	events.EvListen(&events.EvListener{
