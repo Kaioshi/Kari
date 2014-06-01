@@ -13,3 +13,6 @@ username: Kyuu
 
 # Autojoin list - comma separated
 autojoin: #pyoshi
+
+# Whipping Boys - comma separated list of names to use in comic responses / aliases
+whipping boys: ranma, Lemon-kun, Sketch, plonk, bael, Deide

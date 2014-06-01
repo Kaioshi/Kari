@@ -10,6 +10,7 @@ type Config struct {
 	Server, Port, Username, Realname, Prefix string
 	Nicknames                                []string
 	Autojoin                                 []string
+	WhippingBoys                             []string
 }
 
 func (conf *Config) Parse() {
@@ -48,6 +49,8 @@ func (conf *Config) Parse() {
 				conf.Prefix = entry
 			case "autojoin":
 				conf.Autojoin = strings.Split(entry, ", ")
+			case "whipping boys":
+				conf.WhippingBoys = strings.Split(entry, ", ")
 			default:
 				// unparsed
 				//fmt.Println("Unparsed config line:", line)
