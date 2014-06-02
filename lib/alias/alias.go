@@ -7,6 +7,7 @@ import (
 	"Kari/lib"
 	"Kari/lib/logger"
 	"Kari/lib/storage"
+	"Kari/lib/words"
 	"fmt"
 	"regexp"
 	"strings"
@@ -42,9 +43,18 @@ func (e *Event) Populate(params *events.Params, args []string, aliasEntry *strin
 
 func (e *Event) TmplFuncs() template.FuncMap {
 	return template.FuncMap{
-		"args":  e.GetArg,
-		"rand":  randomSelect,
-		"first": firstNotEmpty,
+		"args":        e.GetArg,
+		"rand":        randomSelect,
+		"first":       firstNotEmpty,
+		"verb":        words.RandVerb,
+		"verbs":       words.RandVerbs,
+		"verbed":      words.RandVerbed,
+		"verbing":     words.RandVerbing,
+		"noun":        words.RandNoun,
+		"adjective":   words.RandAdjective,
+		"adverb":      words.RandAdverb,
+		"pronoun":     words.RandPronoun,
+		"preposition": words.RandPreposition,
 	}
 }
 

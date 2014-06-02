@@ -50,6 +50,11 @@ func RandSelect(choices []string) *string {
 	return &choices[r.Intn(len(choices))]
 }
 
+func RandSelectBytes(choices [][]byte) *[]byte {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	return &choices[r.Intn(len(choices))]
+}
+
 func Timestamp(line string) string {
 	if line == "" {
 		return time.Now().Format("[" + time.Stamp + "]")
