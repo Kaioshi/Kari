@@ -3,6 +3,7 @@ package alias
 import (
 	"Kari/config"
 	"Kari/irc/events"
+	"Kari/irc/globals"
 	"Kari/lib"
 	"Kari/lib/logger"
 	"Kari/lib/storage"
@@ -22,6 +23,7 @@ type Event struct {
 	Context     string
 	Data        string
 	WhippingBoy string
+	RandNick    string
 	Args        []string
 }
 
@@ -30,6 +32,9 @@ func (e *Event) Populate(params *events.Params, args []string, aliasEntry *strin
 	e.Args = args
 	e.From = params.Nick
 	e.Context = params.Context
+	if strings.Index(*aliasEntry, ".RandNick") > -1 {
+		e.RandNick = globals.Channels[strings.ToLower(params.Context)].RandNick()
+	}
 	if strings.Index(*aliasEntry, ".WhippingBoy") > -1 {
 		e.WhippingBoy = *lib.RandSelect(Config.WhippingBoys)
 	}

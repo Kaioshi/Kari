@@ -3,6 +3,7 @@ package irc
 import (
 	"Kari/config"
 	"Kari/irc/events"
+	"Kari/irc/globals"
 	"Kari/lib"
 	"Kari/lib/alias"
 	"Kari/lib/logger"
@@ -19,23 +20,9 @@ import (
 var sem = make(chan int, 1)
 
 type IRC struct {
-	Info   Info
+	Info   globals.Info
 	Config config.Config
 	Conn   net.Conn
-}
-
-type Info struct {
-	Nick     string
-	Address  string
-	User     string
-	Network  string
-	Server   string
-	Channels lib.StrList
-}
-
-func (i *Info) String() string {
-	return fmt.Sprintf("Nick: %s, Address: %s, User: %s, Network: %s, Server: %s, Channels: %s",
-		i.Nick, i.Address, i.User, i.Network, i.Server, strings.Join(i.Channels.List, ", "))
 }
 
 func (irc *IRC) SilentSend(line string) {

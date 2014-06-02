@@ -5,6 +5,7 @@ import (
 	"Kari/config"
 	"Kari/irc"
 	"Kari/irc/core"
+	"Kari/irc/globals"
 	"Kari/irc/ial"
 	"Kari/lib"
 	"Kari/lib/alias"
@@ -20,7 +21,7 @@ import (
 func main() {
 	conf := &config.Config{}
 	conf.Parse()
-	info := &irc.Info{}
+	info := &globals.Info{}
 	bot := &irc.IRC{Config: *conf, Info: *info}
 
 	// required

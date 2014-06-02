@@ -15,7 +15,7 @@ func Register(bot *irc.IRC) {
 	events.EvListenComplex(&events.ComplexEventListener{
 		Handle: "titlesnarfer",
 		Event:  "PRIVMSG",
-		Regex:  ".*(?:https?:\\/\\/[^\\001 ]+)",
+		Regex:  "(https?:\\/\\/[^\001 ]+)",
 		Callback: func(input *events.Params) {
 			bot.Say(input.Context, web.GetTitle(input.Match))
 		}})
