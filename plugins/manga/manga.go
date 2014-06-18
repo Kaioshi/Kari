@@ -40,7 +40,11 @@ func parseRSS(rss []byte, source string) (map[string]MangaEntry, error) {
 		if line == "" {
 			continue
 		}
-		title = html.UnescapeString(line[strings.Index(line, "<title>")+7 : strings.Index(line, "</title>")])
+		title = line[strings.Index(line, "<title>")+7 : strings.Index(line, "</title>")]
+		title = html.UnescapeString(title)
+		if source == "mangafox" {
+			title = html.UnescapeString(title) // one more time - mangafox double escape sometimes -.-
+		}
 		tmpDate = line[strings.Index(line, "<pubDate>")+9 : strings.Index(line, "</pubDate>")]
 		date, err := time.Parse("Mon, 2 Jan 2006 15:04:05 -0700", tmpDate)
 		if err != nil {
@@ -161,7 +165,7 @@ func checkUpdates(bot *irc.IRC, source string, context string) {
 					// update found
 					switch source {
 					case "mangastream":
-						message = fmt.Sprintf("%s is out \\o/ ~ %s ~ %q",
+						message = fmt.Sprintf("%s is out! \\o/ ~ %s ~ %q",
 							entry.Title, entry.Link, entry.Desc)
 						newEntry = MangaEntry{
 							Manga:    entry.Title[:len(key)],
@@ -172,7 +176,7 @@ func checkUpdates(bot *irc.IRC, source string, context string) {
 							Announce: watched[key].Announce,
 						}
 					case "mangafox":
-						message = fmt.Sprintf("%s is out \\o/ ~ %s", entry.Title, entry.Link)
+						message = fmt.Sprintf("%s is out! \\o/ ~ %s", entry.Title, entry.Link)
 						newEntry = MangaEntry{
 							Manga:    entry.Title[:len(key)],
 							Title:    entry.Title,
